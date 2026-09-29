@@ -1,0 +1,124 @@
+---
+import { wedding } from '../data/wedding.js';
+const { registry } = wedding;
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec'; // <-- same URL
+---
+<section id="registry" class="section">
+  <div class="container">
+    <p class="section-label">With love</p>
+    <h2 class="section-title">Registry</h2>
+    <p class="muted intro">
+      Your presence is the greatest gift. If your heart moves you to give,
+      here are the details.
+    </p>
+
+    <div id="registry-loading" class="state">
+      <p class="muted">Verifying your invitation…</p>
+    </div>
+
+    <div id="registry-locked" class="state" hidden>
+      <h3 class="serif">Gift details are for invited guests.</h3>
+      <p class="muted">
+        Please use the personalised link sent to you by the couple or the
+        event planner to view this section.
+      </p>
+    </div>
+
+    <div id="gift-content" hidden>
+      <h3 class="serif group-title">Naira transfers</h3>
+      <div class="cards">
+        {registry.naira.map(acc => (
+          <div class="card">
+            <p class="bank">{acc.bank}</p>
+            <p class="holder">{acc.holder}</p>
+            <p class="num">{acc.number}</p>
+            <button class="copy" data-copy={acc.number}>Copy number</button>
+          </div>
+        ))}
+      </div>
+
+      <h3 class="serif group-title">GBP — UK transfers</h3>
+      <div class="cards">
+        <div class="card">
+          <p class="bank">Lloyds Bank</p>
+          <p class="holder">{registry.gbp.uk.name}</p>
+          <p class="num">Sort code: {registry.gbp.uk.sortCode}</p>
+          <p class="num">Account: {registry.gbp.uk.account}</p>
+          <button class="copy" data-copy={`${registry.gbp.uk.sortCode} ${registry.gbp.uk.account}`}>Copy details</button>
+        </div>
+      </div>
+
+      <h3 class="serif group-title">International transfers</h3>
+      <div class="cards">
+        <div class="card wide">
+          <p class="holder">{registry.gbp.international.name}</p>
+          <p class="num">IBAN: {registry.gbp.international.iban}</p>
+          <p class="num">BIC/SWIFT: {registry.gbp.international.bic}</p>
+          <button class="copy" data-copy={registry.gbp.international.iban}>Copy IBAN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .state { max-width: 640px; }
+  .intro { max-width: 520px; margin: 0 0 40px; }
+  .group-title { font-size: 24px; margin: 40px 0 16px; font-style: italic; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { background: #fff; border: 1px solid var(--line); padding: 24px; }
+  .card.wide { grid-column: 1 / -1; }
+  .bank { text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; color: var(--gold); margin: 0 0 8px; }
+  .holder { font-family: 'Cormorant Garamond', serif; font-size: 20px; margin: 0 0 8px; }
+  .num { font-size: 15px; margin: 0 0 6px; letter-spacing: 0.03em; }
+  .copy {
+    margin-top: 12px; background: none; border: 1px solid var(--line);
+    padding: 8px 14px; font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer;
+  }
+  .copy:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+</style>
+
+<script define:vars={{ API }}>
+  const $ = (id) => document.getElementById(id);
+
+  async function init() {
+    const token = window.__inviteToken
+      || (new URLSearchParams(location.search).get('invite') || '').toUpperCase().trim();
+
+    if (!token) {
+      $('registry-loading').hidden = true;
+      $('registry-locked').hidden = false;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}?action=registry&token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      $('registry-loading').hidden = true;
+      if (data.valid) {
+        $('gift-content').hidden = false;
+      } else {
+        $('registry-locked').hidden = false;
+      }
+    } catch {
+      $('registry-loading').hidden = true;
+      $('registry-locked').hidden = false;
+    }
+  }
+
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy);
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = old), 1500);
+      } catch {}
+    });
+  });
+
+  // Wait briefly for RSVP component to set the token if user lands on registry first
+  setTimeout(init, 100);
+</script>

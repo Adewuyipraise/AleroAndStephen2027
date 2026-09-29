@@ -1,0 +1,70 @@
+---
+import { wedding } from '../data/wedding.js';
+const { schedule, stream } = wedding;
+---
+<section id="schedule" class="section">
+  <div class="container">
+    <p class="section-label">The day</p>
+    <h2 class="section-title">Schedule of events</h2>
+
+    <ol class="timeline">
+      {schedule.map(item => (
+        <li>
+          <div class="time">{item.time}</div>
+          <div class="body">
+            <h3>{item.event}</h3>
+            <p class="muted">{item.venue}</p>
+            <p class="day">{item.day}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    <div class="stream-card">
+      <p class="section-label">Live stream</p>
+      <h3 class="serif">Join us virtually</h3>
+      <p class="muted">
+        The engagement and white wedding will be streamed live for bespoke guests.
+        Watch links will appear here closer to the date.
+      </p>
+      <div class="stream-links">
+        {stream.day1
+          ? <a href={stream.day1} target="_blank" rel="noopener" class="btn">Watch — 16 April</a>
+          : <span class="btn ghost disabled">Stream link coming soon — 16 April</span>}
+        {stream.day2
+          ? <a href={stream.day2} target="_blank" rel="noopener" class="btn">Watch — 17 April</a>
+          : <span class="btn ghost disabled">Stream link coming soon — 17 April</span>}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .timeline { list-style: none; padding: 0; margin: 0 0 64px; }
+  .timeline li {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .time {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--gold);
+  }
+  .body h3 { margin: 0 0 4px; font-size: 22px; }
+  .body p { margin: 0 0 4px; font-size: 14px; }
+  .day { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+  .stream-card {
+    padding: 32px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  .stream-card h3 { font-size: 26px; margin: 0 0 8px; }
+  .stream-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .disabled { opacity: 0.5; cursor: not-allowed; }
+  @media (max-width: 640px) {
+    .timeline li { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>

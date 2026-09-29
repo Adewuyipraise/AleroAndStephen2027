@@ -1,0 +1,64 @@
+---
+import { wedding } from '../data/wedding.js';
+const { story } = wedding;
+---
+<section id="story" class="section">
+  <div class="container">
+    <p class="section-label">Our story</p>
+    <h2 class="section-title">How we got here</h2>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="alero" role="tab">Alero's POV</button>
+      <button class="tab" data-tab="stephen" role="tab">Stephen's POV</button>
+    </div>
+
+    <div class="panel active" data-panel="alero">
+      <p class="year">2023</p>
+      <h3>{story.alero.title}</h3>
+      {story.alero.paragraphs.map(p => <p>{p}</p>)}
+    </div>
+
+    <div class="panel" data-panel="stephen">
+      <p class="year">2023</p>
+      <h3>{story.stephen.title}</h3>
+      {story.stephen.paragraphs.map(p => <p>{p}</p>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 32px; border-bottom: 1px solid var(--line); }
+  .tab {
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    color: var(--gold);
+    margin: 0 0 4px;
+    line-height: 1;
+  }
+  .panel h3 { font-size: 26px; margin: 0 0 20px; font-style: italic; }
+  .panel p { font-size: 16px; margin: 0 0 18px; color: #3a3733; text-align: justify; text-justify: inter-word; hyphens: auto; -webkit-hyphens: auto; }
+</style>
+
+<script>
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === id));
+    });
+  });
+</script>

@@ -1,0 +1,51 @@
+---
+const photos = Array.from({ length: 25 }, (_, i) => ({
+  src: `/images/${i + 1}.png`,
+  alt: `Alero & Stephen — photo ${i + 1}`,
+}));
+---
+<section id="gallery" class="section">
+  <div class="container">
+    <p class="section-label">Together</p>
+    <h2 class="section-title">Gallery</h2>
+    <div class="grid">
+      {photos.map((p, i) => (
+        <figure class={i % 5 === 0 ? 'feature' : ''}>
+          <img src={p.src} alt={p.alt} loading="lazy" decoding="async" />
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  figure {
+    margin: 0;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    background: var(--line);
+  }
+  figure.feature {
+    grid-column: span 2;
+    grid-row: span 2;
+    aspect-ratio: auto;
+  }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  figure:hover img { transform: scale(1.06); }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    figure.feature { grid-column: span 2; grid-row: span 2; }
+  }
+</style>

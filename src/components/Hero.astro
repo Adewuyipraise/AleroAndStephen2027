@@ -1,0 +1,266 @@
+---
+import { wedding } from '../data/wedding.js';
+const { couple, dates } = wedding;
+
+// Pick the photos you want to rotate through the hero
+const heroImages = [
+  '/images/1.png',
+  '/images/4.png',
+  '/images/7.png',
+  '/images/10.png',
+  '/images/13.png',
+  '/images/16.png',
+  '/images/19.png',
+];
+---
+<section class="hero">
+  <div class="hero-bg" id="hero-bg" aria-hidden="true">
+    {heroImages.map((src, i) => (
+      <div
+        class={`hero-slide ${i === 0 ? 'active' : ''}`}
+        style={`background-image: url('${src}');`}
+        data-index={i}
+      ></div>
+    ))}
+  </div>
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <div class="hero-inner">
+    <p class="eyebrow">We're getting married</p>
+    <h1>
+      <span>{couple.bride}</span>
+      <span class="amp">&</span>
+      <span>{couple.groom}</span>
+    </h1>
+    <p class="date">{dates.displayRange}</p>
+    <p class="place">Virtual ceremony · Reception in Badagry, Lagos</p>
+    <div class="countdown" id="countdown" aria-live="polite">
+      <div><strong data-days>—</strong><span>Days</span></div>
+      <div><strong data-hours>—</strong><span>Hours</span></div>
+      <div><strong data-mins>—</strong><span>Minutes</span></div>
+      <div><strong data-secs>—</strong><span>Seconds</span></div>
+    </div>
+    <div class="cta">
+      <a href="#rsvp" class="btn">RSVP</a>
+      <a href="#story" class="btn ghost">Our Story</a>
+    </div>
+  </div>
+
+  <div class="hero-dots" role="tablist" aria-label="Hero images">
+    {heroImages.map((_, i) => (
+      <button
+        class={`dot ${i === 0 ? 'active' : ''}`}
+        data-dot={i}
+        aria-label={`Show image ${i + 1}`}
+      ></button>
+    ))}
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    overflow: hidden;
+    color: #fff;
+    background: #1a1a1a;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.6s ease-in-out, transform 8s ease-out;
+    transform: scale(1.05);
+    will-change: opacity, transform;
+  }
+
+  .hero-slide.active {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      to bottom,
+      rgba(20, 20, 20, 0.45) 0%,
+      rgba(20, 20, 20, 0.55) 50%,
+      rgba(20, 20, 20, 0.75) 100%
+    );
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    font-size: 12px;
+    color: #f1e6d2;
+    margin: 0 0 32px;
+  }
+
+  h1 {
+    font-size: clamp(52px, 12vw, 108px);
+    line-height: 0.95;
+    margin: 0 0 32px;
+    font-weight: 400;
+  }
+  h1 span { display: block; }
+  .amp {
+    font-style: italic;
+    font-size: 0.5em;
+    color: #e8d5b0;
+    margin: 8px 0;
+  }
+
+  .date {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px;
+    color: #fff;
+  }
+  .place { font-size: 14px; margin: 0 0 48px; color: #e8e0d4; }
+
+  .countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 480px;
+    margin: 0 auto 48px;
+  }
+  .countdown div { text-align: center; }
+  .countdown strong {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 40px;
+    font-weight: 500;
+    color: #fff;
+  }
+  .countdown span {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #cfc5b6;
+  }
+
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .hero .btn {
+    background: transparent;
+    color: #fff;
+    border-color: #fff;
+  }
+  .hero .btn:hover { background: #fff; color: #1e1e1c; }
+  .hero .btn.ghost { background: rgba(255,255,255,0.05); color: #fff; }
+  .hero .btn.ghost:hover { background: #fff; color: #1e1e1c; }
+
+  .hero-dots {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.6);
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .dot.active {
+    background: #e8d5b0;
+    border-color: #e8d5b0;
+    transform: scale(1.3);
+  }
+
+  @media (max-width: 480px) {
+    .countdown strong { font-size: 28px; }
+    .hero-dots { bottom: 20px; }
+  }
+</style>
+
+<script>
+  import { wedding } from '../data/wedding.js';
+
+  // ---------- Countdown ----------
+  const target = new Date(wedding.dates.engagement).getTime();
+  const $ = (s) => document.querySelector(s);
+  const tick = () => {
+    const diff = Math.max(0, target - Date.now());
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    $('[data-days]').textContent = d;
+    $('[data-hours]').textContent = String(h).padStart(2, '0');
+    $('[data-mins]').textContent = String(m).padStart(2, '0');
+    $('[data-secs]').textContent = String(s).padStart(2, '0');
+  };
+  tick();
+  setInterval(tick, 1000);
+
+  // ---------- Hero slideshow ----------
+  const slides = Array.from(document.querySelectorAll('.hero-slide'));
+  const dots = Array.from(document.querySelectorAll('.dot'));
+  const ROTATE_MS = 6000; // change image every 6 seconds
+  let current = 0;
+  let timer;
+
+  function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (index + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+
+  function next() {
+    goTo(current + 1);
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    timer = setInterval(next, ROTATE_MS);
+  }
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      goTo(i);
+      startTimer(); // reset timer on manual navigation
+    });
+  });
+
+  // Respect reduced-motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReducedMotion && slides.length > 1) {
+    startTimer();
+  }
+</script>

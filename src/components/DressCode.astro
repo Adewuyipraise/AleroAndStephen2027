@@ -1,0 +1,28 @@
+---
+import { wedding } from '../data/wedding.js';
+---
+<section id="dress" class="section">
+  <div class="container">
+    <p class="section-label">What to wear</p>
+    <h2 class="section-title">Dress code</h2>
+    <ul class="dress-list">
+      {wedding.dressCode.map(item => (
+        <li>
+          <h3>{item.event}</h3>
+          <p>{item.code}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .dress-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; }
+  .dress-list li {
+    padding: 24px 28px;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+  .dress-list h3 { margin: 0 0 8px; font-size: 22px; }
+  .dress-list p { margin: 0; font-size: 15px; color: #3a3733; }
+</style>

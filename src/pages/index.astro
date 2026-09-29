@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Story from '../components/Story.astro';
+import Gallery from '../components/Gallery.astro';
+import Schedule from '../components/Schedule.astro';
+import DressCode from '../components/DressCode.astro';
+import Registry from '../components/Registry.astro';
+import Rsvp from '../components/Rsvp.astro';
+import Details from '../components/Details.astro';
+import Faq from '../components/Faq.astro';
+import { wedding } from '../data/wedding.js';
+---
+<Base>
+  <Hero />
+  <Story />
+  <Gallery />
+  <Schedule />
+  <DressCode />
+  <Registry />
+  <Rsvp />
+  <Details />
+  <Faq />
+
+  <footer class="site-footer">
+    <div class="container">
+      <p class="hashtag">{wedding.couple.hashtag}</p>
+      <p class="credit">
+        © 2026 Designed and Developed by
+        <a
+          href="https://wa.me/2349025958168"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Pesedie Rasheed
+        </a>
+      </p>
+    </div>
+  </footer>
+</Base>
+
+<style>
+  .site-footer {
+    text-align: center;
+    padding: 56px 24px;
+    border-top: 1px solid var(--line);
+    background: #fff;
+  }
+  .site-footer .hashtag {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    color: var(--gold);
+    margin: 0 0 12px;
+    letter-spacing: 0.05em;
+  }
+  .site-footer .credit {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  .site-footer .credit a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .site-footer .credit a:hover {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+</style>

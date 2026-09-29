@@ -1,0 +1,88 @@
+---
+const { title = 'Alero & Stephen — 16–17 April 2027' } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Alero & Stephen are getting married on 16–17 April 2027. Wedding details, RSVP, registry and live stream." />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <slot />
+    <style is:global>
+      :root {
+        --cream: #f7f3ec;
+        --ink: #1e1e1c;
+        --muted: #6b6560;
+        --gold: #a89274;
+        --line: #e3ddd2;
+        --green: #4a6b52;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--cream);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1, h2, h3, .serif {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+      }
+      a { color: inherit; }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .section {
+        padding: 80px 0;
+        border-top: 1px solid var(--line);
+      }
+      .section-label {
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        font-size: 11px;
+        color: var(--gold);
+        margin: 0 0 12px;
+      }
+      .section-title {
+        font-size: clamp(32px, 5vw, 44px);
+        margin: 0 0 40px;
+        font-weight: 400;
+      }
+      .muted { color: var(--muted); }
+      .btn {
+        display: inline-block;
+        padding: 14px 28px;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        color: var(--cream);
+        text-decoration: none;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+      }
+      .btn:hover { background: transparent; color: var(--ink); }
+      .btn.ghost { background: transparent; color: var(--ink); }
+      .btn.ghost:hover { background: var(--ink); color: var(--cream); }
+      @media (max-width: 640px) {
+        .section { padding: 56px 0; }
+      }
+    </style>
+  </body>
+</html>

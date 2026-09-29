@@ -1,0 +1,51 @@
+---
+import { wedding } from '../data/wedding.js';
+---
+<section id="details" class="section">
+  <div class="container">
+    <p class="section-label">Good to know</p>
+    <h2 class="section-title">Details</h2>
+    <div class="grid">
+      <div>
+        <p class="k">Date</p>
+        <p class="v">{wedding.dates.displayRange}</p>
+      </div>
+      <div>
+        <p class="k">Engagement</p>
+        <p class="v">{wedding.venues.engagement.label}</p>
+      </div>
+      <div>
+        <p class="k">White Wedding</p>
+        <p class="v">{wedding.venues.whiteWedding.label}</p>
+      </div>
+      <div>
+        <p class="k">Reception</p>
+        <p class="v">{wedding.venues.reception.label}</p>
+      </div>
+      <div>
+        <p class="k">RSVP by</p>
+        <p class="v">{wedding.rsvp.closeDate}</p>
+      </div>
+      <div>
+        <p class="k">Enquiries</p>
+        <p class="v">{wedding.contact.phone || 'To be announced'}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+  }
+  .k {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 11px;
+    color: var(--gold);
+    margin: 0 0 6px;
+  }
+  .v { font-size: 16px; margin: 0; }
+</style>

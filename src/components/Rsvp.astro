@@ -1,0 +1,201 @@
+---
+import { wedding } from '../data/wedding.js';
+const { rsvp } = wedding;
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
+---
+<section id="rsvp" class="section">
+  <div class="container">
+    <p class="section-label">Join us</p>
+    <h2 class="section-title">RSVP</h2>
+
+    <div id="rsvp-loading" class="state">
+      <p class="muted">Verifying your invitation…</p>
+    </div>
+
+    <div id="rsvp-locked" class="state" hidden>
+      <h3 class="serif">This RSVP link is personal.</h3>
+      <p class="muted">
+        Please use the personalised link sent to you by the couple or the
+        event planner. If you believe you received this in error, kindly
+        contact the couple directly.
+      </p>
+    </div>
+
+    <div id="rsvp-used" class="state" hidden>
+      <h3 class="serif">Thank you — you've already responded.</h3>
+      <p class="muted">Your RSVP has been received. We can't wait to celebrate with you.</p>
+    </div>
+
+    <div id="rsvp-form-wrap" class="state" hidden>
+      <p class="muted">
+        Dear <strong id="guest-name">guest</strong>, kindly respond by
+        <strong>{rsvp.closeDate}</strong>.
+      </p>
+
+      <form class="rsvp-form" id="rsvp-form">
+        <input type="hidden" name="token" id="token-field" />
+
+        <div class="row">
+          <label>Your full name (as on your invitation)
+            <input name="name" id="name-field" required />
+          </label>
+          <label>Email
+            <input name="email" type="email" required />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Phone (WhatsApp)
+            <input name="phone" />
+          </label>
+          <label>Attending?
+            <select name="attending" required>
+              <option value="">Select…</option>
+              <option>Yes, all events</option>
+              <option>Yes, engagement only</option>
+              <option>Yes, white wedding only</option>
+              <option>Yes, reception only</option>
+              <option>No, sending love from afar</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Bringing a +1?
+            <select name="plusOne" id="plus-one-field">
+              <option>No</option>
+              <option>Yes — 1 guest</option>
+            </select>
+          </label>
+          <label>Children under 11 attending?
+            <input name="children" type="number" min="0" value="0" />
+          </label>
+        </div>
+
+        <label class="full" id="plus-one-name-label" hidden>
+          Your +1's full name
+          <input name="plusOneName" id="plus-one-name" />
+        </label>
+
+        <label class="full">Message to the couple (optional)
+          <textarea name="message" rows="3"></textarea>
+        </label>
+
+        <button type="submit" class="btn" id="submit-btn">Send RSVP</button>
+        <p class="note muted" id="form-note">
+          A +1 maximum. Children under 11 are exempt.
+        </p>
+        <p class="error" id="form-error" hidden></p>
+      </form>
+    </div>
+
+    <div id="rsvp-done" class="state" hidden>
+      <h3 class="serif">Thank you!</h3>
+      <p class="muted">Your RSVP has been received. We can't wait to celebrate with you.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .state { max-width: 640px; }
+  .rsvp-form { display: grid; gap: 16px; margin-top: 24px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  label {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  input, select, textarea {
+    font-family: inherit; font-size: 15px; padding: 12px 14px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    text-transform: none; letter-spacing: normal;
+  }
+  .full { grid-column: 1 / -1; }
+  .note { font-size: 13px; margin-top: 4px; }
+  .error { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+</style>
+
+<script define:vars={{ API }}>
+  const params = new URLSearchParams(location.search);
+  const token = (params.get('invite') || '').toUpperCase().trim();
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => {
+    ['rsvp-loading','rsvp-locked','rsvp-used','rsvp-form-wrap','rsvp-done']
+      .forEach(s => $(s).hidden = s !== id);
+  };
+
+  // Store token globally so Registry.astro can reuse it
+  window.__inviteToken = token;
+
+  const plusOneSelect = $('plus-one-field');
+  const plusOneNameLabel = $('plus-one-name-label');
+  plusOneSelect.addEventListener('change', () => {
+    const yes = plusOneSelect.value.startsWith('Yes');
+    plusOneNameLabel.hidden = !yes;
+    $('plus-one-name').required = yes;
+    if (yes) $('plus-one-name').focus();
+  });
+
+  async function init() {
+    if (!token) { show('rsvp-locked'); return; }
+
+    try {
+      const res = await fetch(`${API}?action=validate&token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      if (!data.valid) {
+        show(data.reason === 'already_used' ? 'rsvp-used' : 'rsvp-locked');
+        return;
+      }
+
+      $('token-field').value = token;
+      $('guest-name').textContent = data.expectedName || 'guest';
+      $('name-field').value = data.expectedName || '';
+      show('rsvp-form-wrap');
+    } catch {
+      show('rsvp-locked');
+    }
+  }
+
+  $('rsvp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('submit-btn');
+    const errEl = $('form-error');
+    errEl.hidden = true;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const payload = Object.fromEntries(new FormData(e.target).entries());
+
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        show('rsvp-done');
+      } else if (data.error === 'name_mismatch') {
+        errEl.textContent = 'The name you entered does not match your invitation. Please enter your full name exactly as it was sent to you.';
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Send RSVP';
+      } else {
+        errEl.textContent = 'Something went wrong: ' + data.error;
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Send RSVP';
+      }
+    } catch (err) {
+      errEl.textContent = 'Connection error. Please try again or contact the couple.';
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Send RSVP';
+    }
+  });
+
+  init();
+</script>

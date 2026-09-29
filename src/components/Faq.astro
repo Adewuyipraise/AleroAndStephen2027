@@ -1,0 +1,35 @@
+---
+import { wedding } from '../data/wedding.js';
+---
+<section id="faq" class="section">
+  <div class="container">
+    <p class="section-label">Questions you might have</p>
+    <h2 class="section-title">FAQ</h2>
+    <div class="faq">
+      {wedding.faq.map((item, i) => (
+        <details>
+          <summary>{item.q}</summary>
+          <p>{item.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq { display: grid; gap: 0; border-top: 1px solid var(--line); }
+  details { border-bottom: 1px solid var(--line); padding: 20px 0; }
+  summary {
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 24px; color: var(--gold); }
+  details[open] summary::after { content: '–'; }
+  details p { margin: 12px 0 0; font-size: 15px; color: #3a3733; }
+</style>
