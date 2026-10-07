@@ -211,7 +211,7 @@ const heroImages = [
   import { wedding } from '../data/wedding.js';
 
   // ---------- Countdown ----------
-  const target = new Date(wedding.dates.engagement).getTime();
+  const target = new Date(wedding.dates.whiteWedding).getTime();
   const $ = (s) => document.querySelector(s);
   const tick = () => {
     const diff = Math.max(0, target - Date.now());
