@@ -1,36 +1,51 @@
 ---
 import { wedding } from '../data/wedding.js';
+const specialTiers = wedding.eventsByTier.Special;
+const engagement = specialTiers.find(e => e.event === 'Traditional / Engagement');
+const wedding2 = specialTiers.find(e => e.event === 'White Wedding');
+const reception = wedding.eventsByTier.General[0];
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
 ---
 <section id="details" class="section">
   <div class="container">
     <p class="section-label">Good to know</p>
     <h2 class="section-title">Details</h2>
+
     <div class="grid">
       <div>
         <p class="k">Date</p>
         <p class="v">{wedding.dates.displayRange}</p>
       </div>
-      <div>
+
+      <div id="detail-engagement" hidden>
         <p class="k">Engagement</p>
-        <p class="v">{wedding.venues.engagement.label}</p>
+        <p class="v">{engagement.venue} </p>
       </div>
-      <div>
+
+      <div id="detail-wedding" hidden>
         <p class="k">White Wedding</p>
-        <p class="v">{wedding.venues.whiteWedding.label}</p>
+        <p class="v">{wedding2.venue} </p>
       </div>
+
       <div>
         <p class="k">Reception</p>
-        <p class="v">{wedding.venues.reception.label}</p>
+        <p class="v">{reception.venue}</p>
       </div>
+
       <div>
         <p class="k">RSVP by</p>
         <p class="v">{wedding.rsvp.closeDate}</p>
       </div>
+
       <div>
         <p class="k">Enquiries</p>
         <p class="v">{wedding.contact.phone || 'To be announced'}</p>
       </div>
     </div>
+
+    <p class="tier-note" id="tier-note" hidden>
+      You are invited to the <strong id="tier-events">Reception Party</strong>.
+    </p>
   </div>
 </section>
 
@@ -48,4 +63,58 @@ import { wedding } from '../data/wedding.js';
     margin: 0 0 6px;
   }
   .v { font-size: 16px; margin: 0; }
+  .tier-note {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--muted);
+  }
 </style>
+
+<script define:vars={{ API }}>
+  async function init() {
+    const token = window.__inviteToken
+      || (new URLSearchParams(location.search).get('invite') || '').toUpperCase().trim();
+
+    if (!token) {
+      // No token — show only the public reception info. This is the General view.
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}?action=validate&token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+      applyTier(data.valid ? (data.guestType || 'General') : 'General');
+    } catch {
+      applyTier('General');
+    }
+  }
+
+  function applyTier(tier) {
+    const isSpecial = tier === 'Special';
+
+    document.getElementById('detail-engagement').hidden = !isSpecial;
+    document.getElementById('detail-wedding').hidden = !isSpecial;
+
+    const note = document.getElementById('tier-note');
+    const events = document.getElementById('tier-events');
+    if (isSpecial) {
+      events.textContent = 'Traditional / Engagement, White Wedding, and Reception Party';
+    } else {
+      events.textContent = 'Reception Party';
+    }
+    note.hidden = false;
+  }
+
+  // Listen for the RSVP component's token resolution
+  window.addEventListener('guest-type-resolved', (e) => {
+    applyTier(e.detail.guestType || 'General');
+  });
+
+  // If no event fires within 1.5s (e.g. user landed directly on Details via anchor),
+  // fetch independently
+  setTimeout(() => {
+    if (document.getElementById('tier-note').hidden) init();
+  }, 1500);
+</script>

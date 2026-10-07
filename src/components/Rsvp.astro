@@ -32,6 +32,11 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
         <strong>{rsvp.closeDate}</strong>.
       </p>
 
+      <div id="invited-events" class="invited-events" hidden>
+        <p class="invited-label">You are invited to:</p>
+        <ul id="event-list"></ul>
+      </div>
+
       <form class="rsvp-form" id="rsvp-form">
         <input type="hidden" name="token" id="token-field" />
 
@@ -48,13 +53,10 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
           <label>Phone (WhatsApp)
             <input name="phone" />
           </label>
-          <label>Attending?
+          <label>Will you be attending?
             <select name="attending" required>
               <option value="">Select…</option>
-              <option>Yes, all events</option>
-              <option>Yes, engagement only</option>
-              <option>Yes, white wedding only</option>
-              <option>Yes, reception only</option>
+              <option>Yes, I'll be there</option>
               <option>No, sending love from afar</option>
             </select>
           </label>
@@ -82,7 +84,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
         </label>
 
         <button type="submit" class="btn" id="submit-btn">Send RSVP</button>
-        <p class="note muted" id="form-note">
+        <p class="note muted">
           A +1 maximum. Children under 11 are exempt.
         </p>
         <p class="error" id="form-error" hidden></p>
@@ -113,10 +115,36 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
   .full { grid-column: 1 / -1; }
   .note { font-size: 13px; margin-top: 4px; }
   .error { color: #b3261e; font-size: 14px; margin-top: 8px; }
+
+  .invited-events {
+    margin: 24px 0 8px;
+    padding: 20px 24px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  .invited-label {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 11px;
+    color: var(--gold);
+    margin: 0 0 12px;
+  }
+  .invited-events ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .invited-events li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .invited-events li:last-child { border-bottom: none; }
+
   @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
 </style>
 
-<script define:vars={{ API }}>
+<script define:vars={{ API, TIERS: wedding.eventsByTier }}>
   const params = new URLSearchParams(location.search);
   const token = (params.get('invite') || '').toUpperCase().trim();
 
@@ -126,8 +154,8 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
       .forEach(s => $(s).hidden = s !== id);
   };
 
-  // Store token globally so Registry.astro can reuse it
   window.__inviteToken = token;
+  window.__guestType = 'General';
 
   const plusOneSelect = $('plus-one-field');
   const plusOneNameLabel = $('plus-one-name-label');
@@ -137,6 +165,10 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     $('plus-one-name').required = yes;
     if (yes) $('plus-one-name').focus();
   });
+
+  function formatEventList(events) {
+    return events.map(e => `${e.event} — ${e.date} · ${e.venue}`);
+  }
 
   async function init() {
     if (!token) { show('rsvp-locked'); return; }
@@ -150,9 +182,20 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
         return;
       }
 
+      const guestType = data.guestType === 'Special' ? 'Special' : 'General';
+      window.__guestType = guestType;
+
       $('token-field').value = token;
       $('guest-name').textContent = data.expectedName || 'guest';
       $('name-field').value = data.expectedName || '';
+
+      const events = TIERS[guestType] || TIERS.General;
+      $('event-list').innerHTML = formatEventList(events).map(e => `<li>${e}</li>`).join('');
+      $('invited-events').hidden = false;
+
+      // Let Details.astro know
+      window.dispatchEvent(new CustomEvent('guest-type-resolved', { detail: { guestType } }));
+
       show('rsvp-form-wrap');
     } catch {
       show('rsvp-locked');
@@ -168,6 +211,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     btn.textContent = 'Sending…';
 
     const payload = Object.fromEntries(new FormData(e.target).entries());
+    payload.guestType = window.__guestType;
 
     try {
       const res = await fetch(API, {

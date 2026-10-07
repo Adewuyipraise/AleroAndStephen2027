@@ -15,7 +15,7 @@ export const wedding = {
     displayRange: '16 – 17 April 2027',
   },
 
-  // Stream links — REPLACE with public youtube.com/live/... watch URLs
+  // Stream links — watch URLs
   stream: {
     day1: 'https://youtube.com/live/h9APQz_GULI?feature=share',
     day2: 'https://youtube.com/live/h9APQz_GULI?feature=share',
@@ -30,6 +30,41 @@ export const wedding = {
       label: 'Eddies Event Centre Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
     },
   },
+
+  eventsByTier: {
+  General: [
+    {
+      event: 'Reception Party',
+      date: 'Saturday, 17 April 2027',
+      time: '1:00 PM – Late',
+      venue: 'Eddies Event Centre Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
+      public: true,
+    },
+  ],
+  Special: [
+    {
+      event: 'Traditional / Engagement',
+      date: 'Friday, 16 April 2027',
+      time: '10:00 AM – 2:00 PM',
+      venue: 'Venue:',
+      public: false,
+    },
+    {
+      event: 'White Wedding',
+      date: 'Saturday, 17 April 2027',
+      time: '8:30 AM – 11:30 AM',
+      venue: 'Venue:',
+      public: false,
+    },
+    {
+      event: 'Reception Party',
+      date: 'Saturday, 17 April 2027',
+      time: '1:00 PM – Late',
+      venue: 'Eddies Event Centre Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
+      public: true,
+    },
+  ],
+},
 
   story: {
     alero: {
@@ -98,4 +133,21 @@ export const wedding = {
     { q: 'Where is the reception?', a: 'Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria.' },
     { q: 'Can I send a gift instead of attending?', a: 'Yes — see the Registry section for Naira and GBP / international transfer details.' },
   ],
+
+  gifts: {
+    enabled: true,
+    currency: 'NGN',
+    currencySymbol: '₦',
+    minCustom: 10000, // minimum custom amount in ₦
+    items: [
+      { id: 'g1', name: 'Standing Mixer',      price: 120000, emoji: '🥣' },
+      { id: 'g2', name: 'Dinner Set (24 pcs)', price: 85000,  emoji: '🍽️' },
+      { id: 'g3', name: 'Blender',             price: 45000,  emoji: '🥤' },
+      { id: 'g4', name: 'Bedding Set',         price: 95000,  emoji: '🛏️' },
+      { id: 'g5', name: 'Cookware Set',        price: 150000, emoji: '🍳' },
+      { id: 'g6', name: 'Honeymoon Fund',      price: 50000,  emoji: '✈️' },
+    ],
+    note: 'Charges are in Naira (₦). If you are paying from a foreign bank, your card issuer will convert automatically.',
+    paystackPublicKey: 'pk_test_df902ea71c84fdf6c134f706be0fd6d90fc8c709',
+  },
 };
