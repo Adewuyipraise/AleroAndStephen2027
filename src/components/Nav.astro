@@ -1,0 +1,199 @@
+---
+import { wedding } from '../data/wedding.js';
+const links = [
+  { href: '#story', label: 'Story' },
+  { href: '#gallery', label: 'Gallery' },
+  { href: '#schedule', label: 'Schedule' },
+  { href: '#dress', label: 'Dress code' },
+  { href: '#registry', label: 'Registry' },
+  { href: '#faq', label: 'FAQ' },
+];
+---
+<nav class="nav" id="site-nav" aria-label="Section navigation">
+  <div class="nav-inner">
+    <a href="#top" class="nav-brand">{wedding.couple.hashtag}</a>
+    <div class="nav-links" id="nav-links">
+      {links.map(l => <a href={l.href}>{l.label}</a>)}
+    </div>
+    <a href="#rsvp" class="nav-cta">RSVP</a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-sheet" id="nav-sheet" hidden>
+  {links.map(l => <a href={l.href}>{l.label}</a>)}
+  <a href="#rsvp" class="sheet-rsvp">RSVP</a>
+</div>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 950;
+    background: rgba(247, 243, 236, 0.86);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .nav.show { transform: translateY(0); }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 22px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .nav-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--gold);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .nav-links a {
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    border-radius: 999px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .nav-links a:hover,
+  .nav-links a.active { color: var(--ink); background: rgba(168, 146, 116, 0.14); }
+
+  .nav-cta {
+    text-decoration: none;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--ink);
+    padding: 10px 20px;
+    border-radius: 999px;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+  }
+  .nav-cta:hover { background: var(--gold); transform: translateY(-1px); }
+
+  .nav-toggle {
+    display: none;
+    margin-left: auto;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    place-items: center;
+    padding: 0;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 16px;
+    height: 1.5px;
+    background: var(--ink);
+    margin: 3px auto;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+  .nav-toggle[aria-expanded="true"] span:first-child { transform: translateY(4.5px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] span:last-child { transform: translateY(-4.5px) rotate(-45deg); }
+
+  /* Mobile sheet */
+  .nav-sheet {
+    position: fixed;
+    top: 62px;
+    left: 0;
+    right: 0;
+    z-index: 949;
+    background: rgba(247, 243, 236, 0.98);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 22px 22px;
+    display: grid;
+    gap: 2px;
+    animation: sheet-in 0.28s ease;
+  }
+  .nav-sheet[hidden] { display: none; }
+  @keyframes sheet-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  .nav-sheet a {
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    padding: 13px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-sheet a:last-child { border-bottom: none; }
+  .nav-sheet .sheet-rsvp {
+    margin-top: 10px;
+    text-align: center;
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 999px;
+    border: none;
+    padding: 14px;
+  }
+
+  @media (max-width: 900px) {
+    .nav-links, .nav-cta { display: none; }
+    .nav-toggle { display: grid; }
+  }
+</style>
+
+<script>
+  const nav = document.getElementById('site-nav');
+  const toggle = document.getElementById('nav-toggle');
+  const sheet = document.getElementById('nav-sheet');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
+
+  // Show the bar once the hero has scrolled past
+  const onScroll = () => {
+    nav.classList.toggle('show', window.scrollY > window.innerHeight * 0.85);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Highlight the section currently in view
+  if ('IntersectionObserver' in window) {
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const id = '#' + entry.target.id;
+        navAnchors.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === id));
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    sections.forEach((s) => spy.observe(s));
+  }
+
+  // Mobile menu
+  const setOpen = (open) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    sheet.hidden = !open;
+  };
+  toggle.addEventListener('click', () => setOpen(sheet.hidden));
+  sheet.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden) setOpen(false); });
+</script>

@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
 import Story from '../components/Story.astro';
 import Gallery from '../components/Gallery.astro';
@@ -12,6 +13,8 @@ import Faq from '../components/Faq.astro';
 import { wedding } from '../data/wedding.js';
 ---
 <Base>
+  <span id="top"></span>
+  <Nav />
   <Hero />
   <Story />
   <Gallery />
@@ -42,16 +45,28 @@ import { wedding } from '../data/wedding.js';
 <style>
   .site-footer {
     text-align: center;
-    padding: 56px 24px;
+    padding: 72px 24px;
     border-top: 1px solid var(--line);
     background: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .site-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1100px, 90%);
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
   }
   .site-footer .hashtag {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 20px;
+    font-size: 26px;
     color: var(--gold);
-    margin: 0 0 12px;
-    letter-spacing: 0.05em;
+    margin: 0 0 14px;
+    letter-spacing: 0.06em;
   }
   .site-footer .credit {
     font-size: 13px;

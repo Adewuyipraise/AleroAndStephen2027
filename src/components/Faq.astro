@@ -17,8 +17,16 @@ import { wedding } from '../data/wedding.js';
 </section>
 
 <style>
-  .faq { display: grid; gap: 0; border-top: 1px solid var(--line); }
-  details { border-bottom: 1px solid var(--line); padding: 20px 0; }
+  .faq { display: grid; gap: 12px; }
+  details {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 4px 26px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  details[open] { border-color: #e0d6c2; box-shadow: var(--shadow-md); }
   summary {
     cursor: pointer;
     font-family: 'Cormorant Garamond', serif;
@@ -27,9 +35,46 @@ import { wedding } from '../data/wedding.js';
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 18px;
+    padding: 20px 0;
   }
   summary::-webkit-details-marker { display: none; }
-  summary::after { content: '+'; font-size: 24px; color: var(--gold); }
-  details[open] summary::after { content: '–'; }
-  details p { margin: 12px 0 0; font-size: 15px; color: #3a3733; }
+  summary::after { content: none; }
+  summary::before {
+    content: '+';
+    order: 2;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--cream);
+    color: var(--gold);
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    line-height: 1;
+    transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
+  }
+  details[open] summary::before {
+    content: '–';
+    transform: rotate(180deg);
+    background: var(--ink);
+    color: var(--cream);
+    border-color: var(--ink);
+  }
+  summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+
+  details p {
+    margin: 0 0 22px;
+    font-size: 15px;
+    color: #3a3733;
+    padding-right: 44px;
+    animation: faq-in 0.35s ease;
+  }
+  @keyframes faq-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+  }
 </style>

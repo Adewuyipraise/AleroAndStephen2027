@@ -10,13 +10,51 @@ const photos = Array.from({ length: 25 }, (_, i) => ({
     <h2 class="section-title">Gallery</h2>
     <div class="grid">
       {photos.map((p, i) => (
-        <figure class={i % 5 === 0 ? 'feature' : ''}>
+        <button
+          type="button"
+          class={`tile ${i % 5 === 0 ? 'feature' : ''}`}
+          data-index={i}
+          aria-label={`View photo ${i + 1} of ${photos.length}`}
+        >
           <img src={p.src} alt={p.alt} loading="lazy" decoding="async" />
-        </figure>
+          <span class="tile-veil" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="m21 15-5-5L5 21"/>
+            </svg>
+          </span>
+        </button>
       ))}
     </div>
   </div>
 </section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <div class="lb-backdrop" data-close></div>
+
+  <button type="button" class="lb-btn lb-close" data-close aria-label="Close viewer">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+
+  <button type="button" class="lb-btn lb-prev" id="lb-prev" aria-label="Previous photo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </button>
+
+  <figure class="lb-stage" id="lb-stage">
+    <img id="lb-img" src="" alt="" draggable="false" />
+  </figure>
+
+  <button type="button" class="lb-btn lb-next" id="lb-next" aria-label="Next photo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+
+  <div class="lb-bar">
+    <span class="lb-count" id="lb-count">1 / 25</span>
+    <div class="lb-thumbs" id="lb-thumbs"></div>
+  </div>
+</div>
 
 <style>
   .grid {
@@ -24,28 +62,358 @@ const photos = Array.from({ length: 25 }, (_, i) => ({
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
   }
-  figure {
+
+  .tile {
     margin: 0;
+    padding: 0;
+    border: none;
+    position: relative;
     overflow: hidden;
     aspect-ratio: 3 / 4;
     background: var(--line);
+    cursor: zoom-in;
+    display: block;
   }
-  figure.feature {
+  .tile.feature {
     grid-column: span 2;
     grid-row: span 2;
     aspect-ratio: auto;
   }
-  img {
+  .tile img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
     transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  figure:hover img { transform: scale(1.06); }
+  .tile:hover img { transform: scale(1.06); }
+  .tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* Hover veil + zoom icon */
+  .tile-veil {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(to top, rgba(20,20,20,0.5), rgba(20,20,20,0.05) 55%, transparent);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .tile-veil svg {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 50%;
+    background: rgba(20,20,20,0.28);
+    backdrop-filter: blur(2px);
+    transform: scale(0.85);
+    transition: transform 0.35s ease;
+  }
+  .tile:hover .tile-veil,
+  .tile:focus-visible .tile-veil { opacity: 1; }
+  .tile:hover .tile-veil svg { transform: scale(1); }
 
   @media (max-width: 720px) {
     .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    figure.feature { grid-column: span 2; grid-row: span 2; }
+    .tile.feature { grid-column: span 2; grid-row: span 2; }
+  }
+
+  /* ---------------- Lightbox ---------------- */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    animation: lb-in 0.28s ease;
+  }
+  .lightbox[hidden] { display: none; }
+  @keyframes lb-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .lb-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(14, 14, 13, 0.94);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .lb-stage {
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    max-width: min(92vw, 1100px);
+    max-height: 82vh;
+    display: grid;
+    place-items: center;
+    touch-action: pan-y;
+  }
+  .lb-stage img {
+    max-width: 100%;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.8);
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: lb-pop 0.3s ease;
+  }
+  .lb-stage img.slide-l { animation: lb-l 0.3s ease; }
+  .lb-stage img.slide-r { animation: lb-r 0.3s ease; }
+  @keyframes lb-pop { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+  @keyframes lb-l { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes lb-r { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* Round controls */
+  .lb-btn {
+    position: absolute;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .lb-btn:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); }
+  .lb-btn:active { transform: scale(0.94); }
+  .lb-btn:focus-visible { outline: 2px solid #e8d5b0; outline-offset: 2px; }
+
+  .lb-close { top: 20px; right: 20px; }
+  .lb-prev { left: 20px; top: 50%; transform: translateY(-50%); }
+  .lb-next { right: 20px; top: 50%; transform: translateY(-50%); }
+  .lb-prev:active, .lb-next:active { transform: translateY(-50%) scale(0.94); }
+
+  /* Counter + thumbnail strip */
+  .lb-bar {
+    position: absolute;
+    z-index: 3;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: min(92vw, 720px);
+  }
+  .lb-count {
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .lb-thumbs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px;
+    max-width: 100%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  }
+  .lb-thumbs::-webkit-scrollbar { display: none; }
+  .lb-thumbs button {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    background: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .lb-thumbs button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lb-thumbs button:hover { opacity: 0.85; }
+  .lb-thumbs button.active { opacity: 1; border-color: #e8d5b0; transform: translateY(-2px); }
+
+  @media (max-width: 720px) {
+    .lb-prev { left: 10px; }
+    .lb-next { right: 10px; }
+    .lb-close { top: 12px; right: 12px; }
+    .lb-btn { width: 40px; height: 40px; }
+    .lb-stage, .lb-stage img { max-height: 74vh; }
   }
 </style>
+
+<script>
+  const photos = Array.from({ length: 25 }, (_, i) => ({
+    src: `/images/${i + 1}.png`,
+    alt: `Alero & Stephen — photo ${i + 1}`,
+  }));
+
+  const box = document.getElementById('lightbox');
+  const img = document.getElementById('lb-img');
+  const count = document.getElementById('lb-count');
+  const thumbsWrap = document.getElementById('lb-thumbs');
+  const prevBtn = document.getElementById('lb-prev');
+  const nextBtn = document.getElementById('lb-next');
+  const stage = document.getElementById('lb-stage');
+
+  let index = 0;
+  let lastFocus = null;
+  let open = false;
+
+  // Build the thumbnail strip once
+  photos.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', `Go to photo ${i + 1}`);
+    b.innerHTML = `<img src="${p.src}" alt="" loading="lazy" />`;
+    b.addEventListener('click', () => go(i));
+    thumbsWrap.appendChild(b);
+  });
+  const thumbBtns = Array.from(thumbsWrap.children);
+
+  function render(dir) {
+    const p = photos[index];
+    img.classList.remove('slide-l', 'slide-r');
+    // Restart the slide animation in the navigation direction
+    if (dir) {
+      void img.offsetWidth;
+      img.classList.add(dir > 0 ? 'slide-r' : 'slide-l');
+    }
+    img.src = p.src;
+    img.alt = p.alt;
+    count.textContent = `${index + 1} / ${photos.length}`;
+
+    thumbBtns.forEach((b, i) => b.classList.toggle('active', i === index));
+    // Scroll the strip manually so the page never moves
+    const active = thumbBtns[index];
+    if (active) {
+      const target = active.offsetLeft - (thumbsWrap.clientWidth - active.offsetWidth) / 2;
+      thumbsWrap.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+    }
+  }
+
+  function go(i) {
+    const n = photos.length;
+    index = ((i % n) + n) % n;
+    render(0);
+  }
+  function next() { index = (index + 1) % photos.length; render(1); }
+  function prev() { index = (index - 1 + photos.length) % photos.length; render(-1); }
+
+  function openBox(i) {
+    lastFocus = document.activeElement;
+    index = i;
+    open = true;
+    box.hidden = false;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    render(0);
+    nextBtn.focus();
+  }
+
+  function closeBox() {
+    open = false;
+    box.hidden = true;
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  // Open from any grid tile
+  document.querySelectorAll('#gallery .tile').forEach(tile => {
+    tile.addEventListener('click', () => openBox(Number(tile.dataset.index)));
+  });
+
+  // Close on backdrop / close button
+  box.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeBox));
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (!open) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeBox(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(photos.length - 1); }
+  });
+
+  // Keep focus trapped inside the dialog
+  box.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !open) return;
+    const focusables = box.querySelectorAll('button');
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  // ---------- Touch swipe ----------
+  let startX = 0, startY = 0, dragging = false, decided = false;
+
+  stage.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    decided = false;
+  }, { passive: true });
+
+  stage.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    if (!decided) {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      // Only handle horizontal swipes; let vertical gestures scroll
+      if (Math.abs(dy) > Math.abs(dx)) { dragging = false; return; }
+      decided = true;
+    }
+    // Follow the finger for feedback
+    const dx = e.touches[0].clientX - startX;
+    img.style.transition = 'none';
+    img.style.transform = `translateX(${dx * 0.5}px)`;
+  }, { passive: true });
+
+  stage.addEventListener('touchend', (e) => {
+    // Always restore inline styles, even if the gesture was cancelled
+    img.style.transition = '';
+    img.style.transform = '';
+    if (!dragging) return;
+    dragging = false;
+    const dx = (e.changedTouches[0].clientX - startX);
+    if (!decided) return;
+    if (dx < -45) next();
+    else if (dx > 45) prev();
+  });
+
+  // ---------- Mouse drag (desktop nicety) ----------
+  let mStart = 0, mDrag = false;
+  stage.addEventListener('mousedown', (e) => { mDrag = true; mStart = e.clientX; });
+  window.addEventListener('mouseup', (e) => {
+    if (!mDrag) return;
+    mDrag = false;
+    const dx = e.clientX - mStart;
+    if (dx < -60) next();
+    else if (dx > 60) prev();
+  });
+
+  // Preload neighbours when the box opens
+  document.querySelectorAll('#gallery .tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      const i = Number(tile.dataset.index);
+      [i + 1, i - 1].forEach(n => {
+        const p = photos[((n % photos.length) + photos.length) % photos.length];
+        const pre = new Image();
+        pre.src = p.src;
+      });
+    });
+  });
+</script>

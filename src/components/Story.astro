@@ -7,18 +7,18 @@ const { story } = wedding;
     <p class="section-label">Our story</p>
     <h2 class="section-title">How we got here</h2>
 
-    <div class="tabs" role="tablist">
-      <button class="tab active" data-tab="alero" role="tab">Alero's POV</button>
-      <button class="tab" data-tab="stephen" role="tab">Stephen's POV</button>
+    <div class="tabs" role="tablist" aria-label="Choose a viewpoint">
+      <button class="tab active" data-tab="alero" role="tab" aria-selected="true" aria-controls="panel-alero" id="tab-alero">Alero's POV</button>
+      <button class="tab" data-tab="stephen" role="tab" aria-selected="false" aria-controls="panel-stephen" id="tab-stephen">Stephen's POV</button>
     </div>
 
-    <div class="panel active" data-panel="alero">
+    <div class="panel active" data-panel="alero" role="tabpanel" id="panel-alero" aria-labelledby="tab-alero">
       <p class="year">2023</p>
       <h3>{story.alero.title}</h3>
       {story.alero.paragraphs.map(p => <p>{p}</p>)}
     </div>
 
-    <div class="panel" data-panel="stephen">
+    <div class="panel" data-panel="stephen" role="tabpanel" id="panel-stephen" aria-labelledby="tab-stephen" hidden>
       <p class="year">2023</p>
       <h3>{story.stephen.title}</h3>
       {story.stephen.paragraphs.map(p => <p>{p}</p>)}
@@ -27,38 +27,92 @@ const { story } = wedding;
 </section>
 
 <style>
-  .tabs { display: flex; gap: 8px; margin-bottom: 32px; border-bottom: 1px solid var(--line); }
+  .tabs {
+    display: inline-flex;
+    gap: 4px;
+    margin-bottom: 36px;
+    padding: 5px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+  }
   .tab {
     background: none;
     border: none;
-    padding: 12px 20px;
+    padding: 11px 24px;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
+    font-size: 18px;
     color: var(--muted);
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
+    border-radius: 999px;
+    transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+    white-space: nowrap;
   }
-  .tab.active { color: var(--ink); border-bottom-color: var(--gold); }
-  .panel { display: none; }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    background: var(--ink);
+    color: var(--cream);
+    box-shadow: 0 8px 18px -12px rgba(30, 30, 28, 0.9);
+  }
+  .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .panel {
+    display: none;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 40px 44px;
+    box-shadow: var(--shadow-sm);
+    animation: panel-in 0.4s ease;
+  }
+  .panel[hidden] { display: none !important; }
   .panel.active { display: block; }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
   .year {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 48px;
+    font-size: 52px;
     color: var(--gold);
     margin: 0 0 4px;
     line-height: 1;
   }
-  .panel h3 { font-size: 26px; margin: 0 0 20px; font-style: italic; }
-  .panel p { font-size: 16px; margin: 0 0 18px; color: #3a3733; text-align: justify; text-justify: inter-word; hyphens: auto; -webkit-hyphens: auto; }
+  .panel h3 { font-size: 27px; margin: 0 0 20px; font-style: italic; }
+  .panel p:not(.year) {
+    font-size: 16px;
+    margin: 0 0 18px;
+    color: #3a3733;
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+  .panel p:last-child { margin-bottom: 0; }
+
+  @media (max-width: 560px) {
+    .panel { padding: 28px 22px; }
+    .tab { padding: 10px 16px; font-size: 16px; }
+  }
 </style>
 
 <script>
-  document.querySelectorAll('.tab').forEach(btn => {
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
-      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === id));
+      tabs.forEach(b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      document.querySelectorAll('.panel').forEach(p => {
+        const on = p.dataset.panel === id;
+        p.classList.toggle('active', on);
+        p.hidden = !on;
+      });
     });
   });
 </script>

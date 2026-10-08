@@ -17,12 +17,40 @@ import { wedding } from '../data/wedding.js';
 </section>
 
 <style>
-  .dress-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; }
+  .dress-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 18px;
+  }
   .dress-list li {
-    padding: 24px 28px;
+    padding: 30px 34px;
     background: #fff;
     border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
-  .dress-list h3 { margin: 0 0 8px; font-size: 22px; }
+  .dress-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--gold);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .dress-list li:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #e8dfcd;
+  }
+  .dress-list li:hover::before { opacity: 1; }
+  .dress-list h3 { margin: 0 0 8px; font-size: 23px; }
   .dress-list p { margin: 0; font-size: 15px; color: #3a3733; }
 </style>

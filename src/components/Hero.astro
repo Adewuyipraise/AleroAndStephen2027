@@ -46,6 +46,11 @@ const heroImages = [
     </div>
   </div>
 
+  <a href="#story" class="scroll-cue" aria-label="Scroll to our story">
+    <span class="scroll-cue-label">Scroll</span>
+    <span class="scroll-cue-line" aria-hidden="true"></span>
+  </a>
+
   <div class="hero-dots" role="tablist" aria-label="Hero images">
     {heroImages.map((_, i) => (
       <button
@@ -145,20 +150,30 @@ const heroImages = [
   .countdown {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 12px;
     max-width: 480px;
     margin: 0 auto 48px;
   }
-  .countdown div { text-align: center; }
+  .countdown div {
+    text-align: center;
+    padding: 16px 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
   .countdown strong {
     display: block;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 40px;
+    font-size: 38px;
     font-weight: 500;
     color: #fff;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
   }
   .countdown span {
-    font-size: 10px;
+    font-size: 9.5px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: #cfc5b6;
@@ -169,11 +184,65 @@ const heroImages = [
   .hero .btn {
     background: transparent;
     color: #fff;
-    border-color: #fff;
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: none;
   }
-  .hero .btn:hover { background: #fff; color: #1e1e1c; }
+  .hero .btn:hover { background: #fff; color: #1e1e1c; border-color: #fff; }
   .hero .btn.ghost { background: rgba(255,255,255,0.05); color: #fff; }
   .hero .btn.ghost:hover { background: #fff; color: #1e1e1c; }
+
+  /* Entrance */
+  .hero-inner > * { animation: hero-up 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .hero-inner .eyebrow { animation-delay: 0.1s; }
+  .hero-inner h1 { animation-delay: 0.2s; }
+  .hero-inner .date { animation-delay: 0.3s; }
+  .hero-inner .place { animation-delay: 0.36s; }
+  .hero-inner .countdown { animation-delay: 0.44s; }
+  .hero-inner .cta { animation-delay: 0.54s; }
+  @keyframes hero-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Scroll cue */
+  .scroll-cue {
+    position: absolute;
+    bottom: 34px;
+    left: 40px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #e8e0d4;
+  }
+  .scroll-cue-label {
+    font-size: 9.5px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+  .scroll-cue-line {
+    width: 1px;
+    height: 34px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.7), transparent);
+    overflow: hidden;
+    position: relative;
+  }
+  .scroll-cue-line::after {
+    content: '';
+    position: absolute;
+    top: -34px;
+    left: 0;
+    width: 1px;
+    height: 34px;
+    background: linear-gradient(to bottom, transparent, #e8d5b0);
+    animation: cue-drop 1.9s ease-in-out infinite;
+  }
+  @keyframes cue-drop {
+    0% { transform: translateY(0); }
+    60%, 100% { transform: translateY(68px); }
+  }
 
   .hero-dots {
     position: absolute;
@@ -204,6 +273,7 @@ const heroImages = [
   @media (max-width: 480px) {
     .countdown strong { font-size: 28px; }
     .hero-dots { bottom: 20px; }
+    .scroll-cue { display: none; }
   }
 </style>
 

@@ -40,14 +40,37 @@ const { schedule, stream } = wedding;
 </section>
 
 <style>
-  .timeline { list-style: none; padding: 0; margin: 0 0 64px; }
+  .timeline { list-style: none; padding: 0; margin: 0 0 64px; position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold), var(--line));
+  }
   .timeline li {
     display: grid;
     grid-template-columns: 180px 1fr;
     gap: 24px;
-    padding: 24px 0;
-    border-bottom: 1px solid var(--line);
+    padding: 22px 0 22px 40px;
+    position: relative;
   }
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: 30px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 2px solid var(--gold);
+    transition: background 0.25s, transform 0.25s;
+  }
+  .timeline li:hover::before { background: var(--gold); transform: scale(1.15); }
+
   .time {
     font-family: 'Cormorant Garamond', serif;
     font-size: 22px;
@@ -55,16 +78,40 @@ const { schedule, stream } = wedding;
   }
   .body h3 { margin: 0 0 4px; font-size: 22px; }
   .body p { margin: 0 0 4px; font-size: 14px; }
-  .day { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
-  .stream-card {
-    padding: 32px;
-    border: 1px solid var(--line);
-    background: #fff;
+  .day {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
-  .stream-card h3 { font-size: 26px; margin: 0 0 8px; }
-  .stream-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
-  .disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .stream-card {
+    padding: 40px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .stream-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to right, var(--gold), var(--gold-soft));
+  }
+  .stream-card h3 { font-size: 28px; margin: 0 0 8px; }
+  .stream-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+  .disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .disabled:hover { transform: none; background: transparent; color: var(--ink); }
+
   @media (max-width: 640px) {
-    .timeline li { grid-template-columns: 1fr; gap: 8px; }
+    .timeline::before { left: 5px; }
+    .timeline li { grid-template-columns: 1fr; gap: 6px; padding-left: 30px; }
+    .timeline li::before { left: -1px; top: 26px; width: 11px; height: 11px; }
+    .stream-card { padding: 28px 22px; }
   }
 </style>

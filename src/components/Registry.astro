@@ -2,9 +2,10 @@
 import { wedding } from '../data/wedding.js';
 const { registry, gifts } = wedding;
 const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
+const quickAmounts = [10000, 25000, 50000, 100000];
 ---
 <section id="registry" class="section">
-  <div class="container">
+  <div class="container registry-container">
     <p class="section-label">With love</p>
     <h2 class="section-title">Registry</h2>
     <p class="muted intro">
@@ -26,368 +27,235 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     </div>
 
     <div id="gift-content" hidden>
-
-      <!-- ================= GIFT REGISTRY ================= -->
-      <div class="gift-cart-section">
-        <h3 class="serif group-title">Gift Registry</h3>
-        <p class="muted cart-intro">
-          Tap any item to add it to your basket. Adjust quantities as you like.
-          You can also send a custom amount below.
-        </p>
-
-        <div class="gift-grid" id="gift-grid"></div>
-      </div>
-
-      <!-- ================= BASKET ================= -->
-      <div class="cart-panel" id="cart-panel">
-        <div class="cart-header">
-          <h4 class="cart-title">Your basket</h4>
-          <span class="cart-count" id="cart-count">0 items</span>
-        </div>
-
-        <div id="cart-empty" class="cart-empty">
-          <div class="empty-icon" aria-hidden="true">
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-              <path d="M3 6h18"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
+      <div class="shop">
+        <!-- ================= GIFTS ================= -->
+        <div class="gifts-col">
+          <div class="col-head">
+            <p class="block-kicker">Step 1</p>
+            <h3 class="serif block-title">Choose a gift</h3>
+            <p class="muted cart-intro">
+              Tap any item to add it to your basket, then adjust the quantity
+              as you like.
+            </p>
           </div>
-          <p class="empty-title">Your basket is empty</p>
-          <p class="empty-sub">Add a gift above, or send a custom amount below.</p>
+          <div class="gift-grid" id="gift-grid"></div>
         </div>
 
-        <ul id="cart-items" class="cart-items"></ul>
+        <!-- ================= DETAILS ================= -->
+        <div class="details-col">
+          <div class="col-head">
+            <p class="block-kicker">Step 2</p>
+            <h3 class="serif block-title">Your details</h3>
+          </div>
 
-        <div class="cart-total" id="cart-total-wrap" hidden>
-          <span>Subtotal</span>
-          <strong id="cart-total">₦0</strong>
-        </div>
+          <div class="form-grid">
+            <label>Your name
+              <input type="text" id="gift-name" placeholder="Jane Doe" />
+            </label>
+            <label>Email (for receipt)
+              <input type="email" id="gift-email" placeholder="you@example.com" required />
+            </label>
+            <label>Phone (WhatsApp, optional)
+              <input type="tel" id="gift-phone" placeholder="+234..." />
+            </label>
+            <label class="anon-label">
+              <input type="checkbox" id="gift-anon" />
+              <span>Send anonymously</span>
+            </label>
+          </div>
 
-        <div class="custom-amount-wrap">
-          <label class="cart-label">
-            <span>Or send a custom amount (₦)</span>
-            <input type="number" id="custom-amount" min="10000" step="1000" placeholder="e.g. 50000" />
+          <label class="full-width">
+            Message for the couple (optional)
+            <textarea id="gift-message" rows="2" placeholder="A little note…"></textarea>
           </label>
         </div>
 
-        <div class="form-grid">
-          <label>Your name
-            <input type="text" id="gift-name" placeholder="Jane Doe" />
-          </label>
-          <label>Email (for receipt)
-            <input type="email" id="gift-email" placeholder="you@example.com" required />
-          </label>
-          <label>Phone (WhatsApp, optional)
-            <input type="tel" id="gift-phone" placeholder="+234..." />
-          </label>
-          <label class="anon-label">
-            <input type="checkbox" id="gift-anon" />
-            <span>Send anonymously</span>
-          </label>
-        </div>
+        <!-- ================= BASKET ================= -->
+        <aside class="basket" id="cart-panel">
+          <div class="cart-header">
+            <h4 class="cart-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                <path d="M3 6h18"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Your basket
+            </h4>
+            <span class="cart-count" id="cart-count">0 items</span>
+          </div>
 
-        <label class="full-width">
-          Message for the couple (optional)
-          <textarea id="gift-message" rows="2" placeholder="A little note…"></textarea>
-        </label>
+          <button type="button" class="clear-cart" id="clear-cart" hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+            </svg>
+            Clear basket
+          </button>
 
-        <div class="checkout-total">
-          <span>Total to pay</span>
-          <strong id="grand-total">₦0</strong>
-        </div>
+          <div id="cart-empty" class="cart-empty">
+            <div class="empty-icon" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                <path d="M3 6h18"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </div>
+            <p class="empty-title">Your basket is empty</p>
+            <p class="empty-sub">Add a gift above, or send a custom amount below.</p>
+          </div>
 
-        <button class="btn pay-btn" id="pay-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;">
-            <rect x="1" y="4" width="22" height="16" rx="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
-          </svg>
-          Pay with Paystack
-        </button>
-        <p class="cart-note muted">{gifts.note}</p>
-        <p class="error" id="gift-error" hidden></p>
+          <ul id="cart-items" class="cart-items"></ul>
+
+          <div class="cart-total" id="cart-total-wrap" hidden>
+            <span>Subtotal</span>
+            <strong id="cart-total">₦0</strong>
+          </div>
+
+          <div class="custom-amount-wrap">
+            <p class="block-kicker or-line"><span>Or contribute an amount</span></p>
+            <div class="amt-chips">
+              {quickAmounts.map((a) => (
+                <button type="button" class="amt-chip" data-amount={a}>
+                  ₦{a.toLocaleString()}
+                </button>
+              ))}
+            </div>
+            <div class="amount-field">
+              <span class="amount-prefix" aria-hidden="true">₦</span>
+              <input type="number" id="custom-amount" min="10000" step="1000" placeholder="e.g. 50000" aria-label="Custom amount in Naira" />
+            </div>
+          </div>
+
+          <div class="min-progress" id="min-progress" hidden>
+            <div class="min-progress-track" aria-hidden="true">
+              <span class="min-progress-fill" id="min-progress-fill"></span>
+            </div>
+            <p class="min-progress-text" id="min-progress-text"></p>
+          </div>
+
+          <div class="checkout-total">
+            <span>Total to pay</span>
+            <strong id="grand-total">₦0</strong>
+          </div>
+
+          <button class="btn pay-btn" id="pay-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <span class="pay-label">Pay with Paystack</span>
+          </button>
+          <p class="cart-note muted">{gifts.note}</p>
+          <p class="error" id="gift-error" hidden></p>
+        </aside>
       </div>
 
       <!-- ================= BANK TRANSFER FALLBACK ================= -->
-      <h3 class="serif group-title">Or send directly</h3>
-
-      <h4 class="serif sub-title">Naira transfers</h4>
-      <div class="cards">
-        {registry.naira.map(acc => (
-          <div class="card">
-            <p class="bank">{acc.bank}</p>
-            <p class="holder">{acc.holder}</p>
-            <p class="num">{acc.number}</p>
-            <button class="copy" data-copy={acc.number}>Copy number</button>
-          </div>
-        ))}
-      </div>
-
-      <h4 class="serif sub-title">GBP — UK transfers</h4>
-      <div class="cards">
-        <div class="card">
-          <p class="bank">Lloyds Bank</p>
-          <p class="holder">{registry.gbp.uk.name}</p>
-          <p class="num">Sort code: {registry.gbp.uk.sortCode}</p>
-          <p class="num">Account: {registry.gbp.uk.account}</p>
-          <button class="copy" data-copy={`${registry.gbp.uk.sortCode} ${registry.gbp.uk.account}`}>Copy details</button>
+      <div class="direct">
+        <div class="col-head">
+          <p class="block-kicker">Prefer a transfer?</p>
+          <h3 class="serif block-title">Or send directly</h3>
         </div>
-      </div>
 
-      <h4 class="serif sub-title">International transfers</h4>
-      <div class="cards">
-        <div class="card wide">
-          <p class="holder">{registry.gbp.international.name}</p>
-          <p class="num">IBAN: {registry.gbp.international.iban}</p>
-          <p class="num">BIC/SWIFT: {registry.gbp.international.bic}</p>
-          <button class="copy" data-copy={registry.gbp.international.iban}>Copy IBAN</button>
+        <p class="bank-label">Naira transfers</p>
+        <div class="cards">
+          {registry.naira.map(acc => (
+            <div class="card">
+              <p class="bank">{acc.bank}</p>
+              <p class="holder">{acc.holder}</p>
+              <p class="num">{acc.number}</p>
+              <button class="copy" data-copy={acc.number}>Copy number</button>
+            </div>
+          ))}
+        </div>
+
+        <p class="bank-label">GBP — UK transfers</p>
+        <div class="cards">
+          <div class="card">
+            <p class="bank">Lloyds Bank</p>
+            <p class="holder">{registry.gbp.uk.name}</p>
+            <p class="num">Sort code: {registry.gbp.uk.sortCode}</p>
+            <p class="num">Account: {registry.gbp.uk.account}</p>
+            <button class="copy" data-copy={`${registry.gbp.uk.sortCode} ${registry.gbp.uk.account}`}>Copy details</button>
+          </div>
+        </div>
+
+        <p class="bank-label">International transfers</p>
+        <div class="cards">
+          <div class="card wide">
+            <p class="holder">{registry.gbp.international.name}</p>
+            <p class="num">IBAN: {registry.gbp.international.iban}</p>
+            <p class="num">BIC/SWIFT: {registry.gbp.international.bic}</p>
+            <button class="copy" data-copy={registry.gbp.international.iban}>Copy IBAN</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Mobile sticky checkout bar -->
+<div class="mobile-bar" id="mobile-bar" hidden>
+  <div class="mobile-bar-info">
+    <span class="mobile-bar-count" id="mobile-bar-count">0 items</span>
+    <strong class="mobile-bar-total" id="mobile-bar-total">₦0</strong>
+  </div>
+  <button type="button" class="mobile-bar-btn" id="mobile-bar-btn">Review basket</button>
+</div>
+
 <!-- Toast -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <style>
+  /* `.container` override — this section needs more room for the grid */
+  .registry-container { max-width: 1160px; }
+
   .state { max-width: 720px; }
-  .intro { max-width: 620px; margin: 0 0 40px; }
-  .group-title { font-size: 26px; margin: 40px 0 16px; font-style: italic; }
-  .sub-title { font-size: 20px; margin: 32px 0 12px; font-style: italic; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-  .card { background: #fff; border: 1px solid var(--line); padding: 24px; }
-  .card.wide { grid-column: 1 / -1; }
-  .bank { text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; color: var(--gold); margin: 0 0 8px; }
-  .holder { font-family: 'Cormorant Garamond', serif; font-size: 20px; margin: 0 0 8px; }
-  .num { font-size: 15px; margin: 0 0 6px; letter-spacing: 0.03em; }
-  .copy {
-    margin-top: 12px; background: none; border: 1px solid var(--line);
-    padding: 8px 14px; font-size: 12px; letter-spacing: 0.1em;
-    text-transform: uppercase; cursor: pointer;
-  }
-  .copy:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .intro { max-width: 620px; margin: 0 0 44px; }
 
-  /* ---------------- Gift grid ---------------- */
-  .gift-cart-section { margin-bottom: 48px; }
-  .cart-intro { max-width: 620px; margin: 0 0 24px; }
+  /* Components below set explicit `display`, so `hidden` needs reinforcing */
+  [hidden] { display: none !important; }
 
-  .gift-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 18px;
-  }
-
-  .gift-card {
-    background: #fff;
-    border: 1px solid var(--line);
-    padding: 22px 20px 18px;
-    cursor: pointer;
-    transition: border-color 0.2s, transform 0.18s ease, box-shadow 0.25s ease;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .gift-card:hover {
-    border-color: var(--gold);
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.07);
-  }
-  .gift-card:active { transform: translateY(-1px) scale(0.99); }
-  .gift-card.in-cart { border-color: var(--gold); background: #fdfaf3; }
-
-  .gift-emoji {
-    font-size: 32px;
-    margin: 0 0 10px;
-    line-height: 1;
-    transition: transform 0.25s ease;
-  }
-  .gift-card:hover .gift-emoji { transform: scale(1.12) rotate(-4deg); }
-
-  .gift-name {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 20px;
-    margin: 0 0 4px;
-    line-height: 1.25;
-  }
-  .gift-price {
-    font-size: 15px;
+  .block-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    font-size: 10.5px;
     color: var(--gold);
-    margin: 0 0 16px;
+    margin: 0 0 8px;
     font-weight: 500;
   }
+  .block-title { font-size: clamp(24px, 3vw, 30px); margin: 0 0 8px; font-weight: 400; }
+  .col-head { margin-bottom: 24px; }
+  .cart-intro { max-width: 480px; margin: 0; font-size: 15px; }
 
-  .gift-add-btn {
-    margin-top: auto;
-    background: #fff;
-    border: 1px solid var(--ink);
-    color: var(--ink);
-    padding: 10px 16px;
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+  /* ---------------- Layout ---------------- */
+  .shop {
+    display: grid;
+    grid-template-areas: "gifts" "details" "basket";
+    gap: 40px;
+    align-items: start;
   }
-  .gift-add-btn:hover {
-    background: var(--ink);
-    color: #fff;
-  }
-  .gift-card.in-cart .gift-add-btn {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #fff;
-  }
-  .gift-card.in-cart .gift-add-btn:hover {
-    background: #8f7a5c;
-    border-color: #8f7a5c;
+  .gifts-col { grid-area: gifts; }
+  .details-col { grid-area: details; }
+  .basket { grid-area: basket; }
+
+  @media (min-width: 960px) {
+    .shop {
+      grid-template-areas: "gifts basket" "details basket";
+      grid-template-columns: minmax(0, 1fr) 400px;
+      gap: 32px 40px;
+    }
   }
 
-  /* Quantity badge on selected cards */
-  .gift-qty-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: var(--gold);
-    color: #fff;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 7px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(168, 146, 116, 0.35);
-    animation: popIn 0.25s ease;
-  }
-  @keyframes popIn {
-    0% { transform: scale(0.4); opacity: 0; }
-    60% { transform: scale(1.15); }
-    100% { transform: scale(1); opacity: 1; }
-  }
+  /* ---------------- Gift grid ---------------- */
 
-  /* ---------------- Cart panel ---------------- */
-  .cart-panel {
+  /* ---------------- Details form ---------------- */
+  .details-col {
     background: #fff;
     border: 1px solid var(--line);
+    border-radius: 20px;
     padding: 28px;
-    margin-top: 32px;
   }
-  .cart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 18px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line);
-  }
-  .cart-title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 24px;
-    margin: 0;
-    font-style: italic;
-  }
-  .cart-count {
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .cart-empty {
-    text-align: center;
-    padding: 24px 16px 32px;
-  }
-  .empty-icon {
-    color: var(--line);
-    margin: 0 0 12px;
-  }
-  .empty-title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 20px;
-    margin: 0 0 4px;
-  }
-  .empty-sub { font-size: 14px; color: var(--muted); margin: 0; }
-
-  .cart-items { list-style: none; padding: 0; margin: 0 0 16px; }
-  .cart-items li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 15px;
-    animation: slideIn 0.28s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .cart-items li:last-child { border-bottom: none; }
-
-  .cart-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-  .cart-item-name { font-weight: 500; }
-  .cart-item-line-price { color: var(--muted); font-size: 13px; }
-
-  .qty-controls { display: flex; gap: 8px; align-items: center; }
-  .qty-btn {
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--line);
-    background: #fff;
-    cursor: pointer;
-    font-size: 15px;
-    line-height: 1;
-    font-family: inherit;
-    color: var(--ink);
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .qty-btn:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .qty-btn:active { transform: scale(0.94); }
-  .qty-value { min-width: 18px; text-align: center; font-weight: 500; }
-
-  .cart-total {
-    display: flex;
-    justify-content: space-between;
-    padding: 16px 0;
-    border-top: 2px solid var(--line);
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 22px;
-    margin-bottom: 16px;
-  }
-
-  .custom-amount-wrap { margin: 0 0 20px; }
-  .cart-label {
-    display: flex; flex-direction: column; gap: 6px;
-    font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--muted);
-  }
-  .custom-amount-wrap input,
-  .form-grid input[type="text"],
-  .form-grid input[type="email"],
-  .form-grid input[type="tel"] {
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    font-size: 15px;
-    font-family: inherit;
-    background: #fff;
-    color: var(--ink);
-    text-transform: none;
-    letter-spacing: normal;
-  }
+  .details-col .col-head { margin-bottom: 20px; }
 
   .form-grid {
     display: grid;
@@ -395,69 +263,435 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     gap: 16px;
     margin-bottom: 16px;
   }
-  .form-grid label {
-    display: flex; flex-direction: column; gap: 6px;
-    font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--muted);
+  .form-grid label,
+  .full-width {
+    display: flex; flex-direction: column; gap: 7px;
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--muted);
   }
+  .form-grid input,
+  .full-width textarea {
+    padding: 13px 15px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: normal;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-grid input:focus,
+  .full-width textarea:focus,
+  .amount-field:focus-within {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(168, 146, 116, 0.16);
+  }
+  .full-width { margin-bottom: 0; }
+  .full-width textarea { resize: vertical; }
+
   .anon-label {
     flex-direction: row !important;
     align-items: center;
-    gap: 8px !important;
+    gap: 10px !important;
     text-transform: none;
     letter-spacing: normal;
+    font-size: 14px;
     color: var(--ink);
     cursor: pointer;
+    align-self: end;
+    padding-bottom: 12px;
   }
-  .anon-label input { cursor: pointer; }
+  .anon-label input {
+    width: 17px; height: 17px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
 
-  .full-width {
-    display: flex; flex-direction: column; gap: 6px;
-    font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--muted);
-    margin-bottom: 20px;
-  }
-  .full-width textarea {
-    padding: 12px 14px;
+  /* ---------------- Basket ---------------- */
+  .basket {
+    background: #fff;
     border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 24px 60px -40px rgba(30, 30, 28, 0.5);
+  }
+  @media (min-width: 960px) {
+    .basket {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+    .basket::-webkit-scrollbar { width: 6px; }
+    .basket::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .basket::-webkit-scrollbar-track { background: transparent; }
+  }
+
+  .cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cart-title {
+    display: flex; align-items: center; gap: 9px;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 21px;
+    margin: 0;
+    font-style: italic;
+    color: var(--ink);
+  }
+  .cart-title svg { color: var(--gold); }
+  .cart-count {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 13px;
+    white-space: nowrap;
+    transition: transform 0.25s ease, background 0.25s, color 0.25s;
+  }
+  .cart-count.pulse {
+    transform: scale(1.09);
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+  }
+
+  .cart-empty {
+    text-align: center;
+    padding: 26px 10px 22px;
+  }
+  .empty-icon {
+    width: 68px; height: 68px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 1px dashed var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+  }
+  .empty-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    margin: 0 0 5px;
+  }
+  .empty-sub { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+  .cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .cart-total strong {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 21px;
+    color: var(--ink);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* Custom amount */
+  .custom-amount-wrap {
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .or-line {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+    white-space: nowrap;
+  }
+  .or-line::before, .or-line::after {
+    content: ''; height: 1px; background: var(--line); flex: 1;
+  }
+  .amt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .amt-chip {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.18s;
+  }
+  .amt-chip:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+  .amt-chip.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--cream);
+  }
+
+  .amount-field {
+    display: flex; align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .amount-prefix {
+    padding: 0 4px 0 15px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .amount-field input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    padding: 13px 14px 13px 6px;
     font-size: 15px;
     font-family: inherit;
-    resize: vertical;
+    background: transparent;
+    color: var(--ink);
   }
+  .amount-field input:focus { outline: none; box-shadow: none; }
+  .amount-field input::-webkit-outer-spin-button,
+  .amount-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .amount-field input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
   .checkout-total {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    padding: 18px 20px;
-    background: #fdfaf3;
-    border: 1px solid var(--gold);
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #fdfaf3 0%, #f7f0e3 100%);
+    border: 1px solid #eadfc9;
+    border-radius: 16px;
     margin-bottom: 16px;
   }
   .checkout-total span {
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-size: 11px;
+    letter-spacing: 0.16em;
+    font-size: 10.5px;
     color: var(--muted);
   }
   .checkout-total strong {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 26px;
+    font-size: 30px;
+    line-height: 1;
     color: var(--ink);
+    font-weight: 500;
   }
 
   .pay-btn {
     width: 100%;
-    padding: 18px 28px;
-    font-size: 14px;
+    padding: 17px 24px;
+    font-size: 13px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #b9a37e 0%, var(--gold) 55%, #96805f 100%);
+    color: #fff;
+    letter-spacing: 0.14em;
+    box-shadow: 0 14px 30px -14px rgba(168, 146, 116, 0.9);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
   }
-  .pay-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .pay-btn:hover {
+    background: linear-gradient(135deg, #c4af8c 0%, #b09a7b 55%, #9f8867 100%);
+    color: #fff;
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 20px 34px -14px rgba(168, 146, 116, 0.95);
+  }
+  .pay-btn:active { transform: translateY(0); }
+  .pay-btn:disabled,
+  .pay-btn:disabled:hover {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: linear-gradient(135deg, #b9a37e 0%, var(--gold) 55%, #96805f 100%);
+    filter: none;
+  }
 
-  .cart-note { font-size: 13px; margin: 12px 0 0; }
-  .error { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .cart-note { font-size: 12.5px; margin: 13px 0 0; line-height: 1.5; text-align: center; }
+  .error { color: #b3261e; font-size: 14px; margin-top: 10px; text-align: center; }
+
+  /* ---------------- Clear basket ---------------- */
+  .clear-cart {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-end;
+    margin: -4px 0 8px;
+    background: none;
+    border: none;
+    padding: 4px 2px;
+    font-family: inherit;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .clear-cart:hover { color: #b3261e; }
+
+  /* ---------------- Minimum contribution progress ---------------- */
+  .min-progress { margin: 16px 0 0; }
+  .min-progress-track {
+    height: 4px;
+    border-radius: 999px;
+    background: #ece5d6;
+    overflow: hidden;
+  }
+  .min-progress-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #d8c79e, var(--gold));
+    transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .min-progress.met .min-progress-fill { background: var(--green); }
+  .min-progress-text {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+    text-align: center;
+  }
+  .min-progress.met .min-progress-text { color: var(--green); }
+
+  /* ---------------- Mobile sticky bar ---------------- */
+  .mobile-bar {
+    position: fixed;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 12px 12px 20px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px -18px rgba(30, 30, 28, 0.4);
+    z-index: 900;
+    transform: translateY(0);
+    animation: bar-in 0.3s ease;
+  }
+  @keyframes bar-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .mobile-bar-info { display: flex; flex-direction: column; gap: 2px; }
+  .mobile-bar-count {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mobile-bar-total {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .mobile-bar-btn {
+    flex-shrink: 0;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .mobile-bar-btn:hover { background: #333330; }
+  .mobile-bar-btn:active { transform: scale(0.97); }
+  @media (min-width: 960px) { .mobile-bar { display: none !important; } }
+
+  /* ---------------- Direct transfer ---------------- */
+  .direct { margin-top: 72px; padding-top: 48px; border-top: 1px solid var(--line); }
+  .bank-label {
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 34px 0 14px;
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: #e8dfcd;
+    box-shadow: 0 20px 40px -28px rgba(30, 30, 28, 0.6);
+  }
+  .card.wide { grid-column: 1 / -1; }
+  .bank {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 10.5px;
+    color: var(--gold);
+    margin: 0 0 10px;
+  }
+  .holder {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 21px;
+    margin: 0 0 10px;
+    line-height: 1.2;
+  }
+  .num {
+    font-size: 15px;
+    margin: 0 0 6px;
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .copy {
+    margin-top: 14px;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .copy:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .copy.copied { background: var(--green); border-color: var(--green); color: #fff; }
 
   /* ---------------- Toast ---------------- */
   .toast {
@@ -467,15 +701,17 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     transform: translateX(-50%) translateY(24px);
     background: var(--ink);
     color: #fff;
-    padding: 14px 24px;
-    border-radius: 4px;
+    padding: 14px 26px;
+    border-radius: 999px;
     font-size: 14px;
     letter-spacing: 0.02em;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.28s ease, transform 0.28s ease;
     z-index: 999;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.4);
+    max-width: calc(100vw - 40px);
+    text-align: center;
   }
   .toast.show {
     opacity: 1;
@@ -484,19 +720,312 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
 
   @media (max-width: 560px) {
     .form-grid { grid-template-columns: 1fr; }
-    .cart-panel { padding: 20px; }
-    .gift-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    .gift-card { padding: 16px 14px 14px; }
-    .gift-emoji { font-size: 26px; }
-    .gift-name { font-size: 17px; }
-    .toast { bottom: 16px; padding: 12px 18px; font-size: 13px; left: 16px; right: 16px; transform: translateY(24px); }
+    .basket { padding: 20px; border-radius: 18px; }
+    .details-col { padding: 22px; border-radius: 18px; }
+    .gift-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .toast { bottom: 86px; padding: 12px 20px; font-size: 13px; left: 16px; right: 16px; transform: translateY(24px); }
     .toast.show { transform: translateY(0); }
+    .checkout-total strong { font-size: 26px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .cart-count, .pay-btn { transition: none; }
   }
 </style>
 
-<script define:vars={{ API, GIFTS :gifts }}>
+<style is:global>
+  /* ---- Dynamic elements (created by JS below) must not be Astro-scoped ---- */
+  #registry [hidden] { display: none !important; }
+
+  @keyframes giftIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes popBadge {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.25); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  #gift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+  }
+  @media (max-width: 560px) {
+    #gift-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  }
+
+  .gift-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    animation: giftIn 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation-delay: var(--d, 0ms);
+    transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+  }
+  .gift-card:hover {
+    transform: translateY(-6px);
+    border-color: transparent;
+    box-shadow: 0 26px 46px -24px rgba(30, 30, 28, 0.45);
+  }
+  .gift-card:focus-visible {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(168, 146, 116, 0.28);
+  }
+  .gift-card.in-cart {
+    border-color: transparent;
+    box-shadow: 0 0 0 1.5px var(--gold), 0 26px 46px -26px rgba(168, 146, 116, 0.75);
+  }
+
+  .gift-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #f4f0e8, #ebe4d6);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gift-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .gift-card:hover .gift-media img { transform: scale(1.07); }
+  .gift-media .gift-media-fallback { display: none; font-size: 52px; line-height: 1; }
+  .gift-media.no-img .gift-media-fallback { display: block; }
+
+  .gift-check {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    box-shadow: 0 6px 16px -6px rgba(168, 146, 116, 0.9);
+    z-index: 1;
+  }
+  .gift-card.in-cart .gift-check { animation: popBadge 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+
+  .gift-body { padding: 15px 16px 4px; }
+  .gift-name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.2;
+    margin: 0 0 5px;
+    color: var(--ink);
+  }
+  .gift-price {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gold);
+    margin: 0;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gift-foot { margin-top: auto; padding: 13px 16px 16px; }
+
+  .gift-add-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 16px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-family: inherit;
+    background: #fff;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+  }
+  .gift-add-btn:hover { background: var(--ink); color: var(--cream); }
+  .gift-add-btn:active { transform: scale(0.97); }
+  .gift-card.in-cart .gift-add-btn { display: none; }
+
+  .gift-stepper {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 5px;
+    background: #fdfaf3;
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+  }
+  .gift-card.in-cart .gift-stepper { display: flex; }
+  .gift-stepper button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    font-size: 17px;
+    line-height: 1;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+  }
+  .gift-stepper button:hover { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .gift-stepper button:active { transform: scale(0.9); }
+  .gift-stepper .gift-stepper-qty {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gift-card, .gift-card .gift-media img, .gift-check { animation: none !important; transition: none !important; }
+    .gift-card.in-cart .gift-check { opacity: 1; transform: scale(1); }
+  }
+
+  /* ---------------- Cart rows ---------------- */
+  .cart-items { list-style: none; padding: 0; margin: 8px 0 0; }
+  .cart-items:empty { margin: 0; }
+  .cart-items li {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px dashed var(--line);
+    animation: rowIn 0.28s ease both;
+  }
+  .cart-items li:last-child { border-bottom: none; }
+
+  .cart-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    object-fit: cover;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .cart-item-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .cart-item-name {
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cart-item-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  .cart-item-ctrl { display: flex; align-items: center; gap: 8px; }
+
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .qty-btn {
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    font-family: inherit;
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(30, 30, 28, 0.12);
+    transition: background 0.15s, color 0.15s, transform 0.12s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qty-btn:hover { background: var(--ink); color: var(--cream); }
+  .qty-btn:active { transform: scale(0.88); }
+  .qty-value {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .remove-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #b8b1a5;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+  }
+  .remove-btn:hover { background: #fbeae9; color: #b3261e; }
+
+  @media (max-width: 420px) {
+    .cart-items li { grid-template-columns: 44px minmax(0, 1fr); }
+    .cart-item-ctrl { grid-column: 1 / -1; justify-content: flex-end; }
+  }
+</style>
+
+<script define:vars={{ API, GIFTS: gifts }}>
   const $ = (id) => document.getElementById(id);
   let cart = {}; // { itemId: qty }
+
+  const money = (n) => `₦${Number(n).toLocaleString()}`;
 
   // ---------- Toast ----------
   let toastTimer;
@@ -508,84 +1037,115 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
+  function pulseCount() {
+    const c = $('cart-count');
+    c.classList.remove('pulse');
+    void c.offsetWidth;
+    c.classList.add('pulse');
+    setTimeout(() => c.classList.remove('pulse'), 450);
+  }
+
   // ---------- Gift grid ----------
   function renderGiftGrid() {
     const grid = $('gift-grid');
-    grid.innerHTML = GIFTS.items.map(item => `
-      <div class="gift-card" data-id="${item.id}" role="button" tabindex="0" aria-label="Add ${item.name} to basket">
-        <div class="gift-emoji" aria-hidden="true">${item.emoji || '🎁'}</div>
-        <p class="gift-name">${item.name}</p>
-        <p class="gift-price">₦${item.price.toLocaleString()}</p>
-        <button type="button" class="gift-add-btn" data-id="${item.id}">
-          Add to basket
-        </button>
+    grid.innerHTML = GIFTS.items.map((item, i) => `
+      <div class="gift-card" data-id="${item.id}" style="--d:${i * 70}ms">
+        <div class="gift-media${item.image ? '' : ' no-img'}">
+          ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy"
+               onerror="this.closest('.gift-media').classList.add('no-img');this.remove();" />` : ''}
+          <span class="gift-media-fallback" aria-hidden="true">${item.emoji || '🎁'}</span>
+          <span class="gift-check" aria-hidden="true">✓</span>
+        </div>
+        <div class="gift-body">
+          <p class="gift-name">${item.name}</p>
+          <p class="gift-price">${money(item.price)}</p>
+        </div>
+        <div class="gift-foot">
+          <button type="button" class="gift-add-btn" data-add="${item.id}"
+                  aria-label="Add ${item.name} to basket">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Add to basket
+          </button>
+          <div class="gift-stepper">
+            <button type="button" data-act="dec" aria-label="Decrease quantity of ${item.name}">−</button>
+            <span class="gift-stepper-qty" aria-live="polite">1</span>
+            <button type="button" data-act="inc" aria-label="Increase quantity of ${item.name}">+</button>
+          </div>
+        </div>
       </div>
     `).join('');
+  }
 
-    // Whole card click
-    grid.querySelectorAll('.gift-card').forEach(card => {
-      card.addEventListener('click', (e) => {
-        // ignore if clicking button (handled separately)
-        if (e.target.closest('.gift-add-btn')) return;
-        addItem(card.dataset.id);
-      });
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          addItem(card.dataset.id);
-        }
-      });
-    });
+  function changeQty(id, delta) {
+    const item = GIFTS.items.find(i => i.id === id);
+    if (!item) return;
+    const next = (cart[id] || 0) + delta;
 
-    // Add button click
-    grid.querySelectorAll('.gift-add-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        addItem(btn.dataset.id);
-      });
-    });
+    if (next <= 0) {
+      if (cart[id]) {
+        delete cart[id];
+        showToast(`Removed ${item.name}`);
+      }
+    } else {
+      cart[id] = next;
+    }
+    renderCart();
   }
 
   function addItem(id) {
-    cart[id] = (cart[id] || 0) + 1;
     const item = GIFTS.items.find(i => i.id === id);
+    if (!item) return;
+    cart[id] = (cart[id] || 0) + 1;
     showToast(`Added ${item.name} to basket`);
     renderCart();
+    pulseCount();
 
-    // Subtle bump animation
     const card = document.querySelector(`.gift-card[data-id="${id}"]`);
     if (card) {
       card.animate(
         [
-          { transform: 'translateY(-3px) scale(1)' },
-          { transform: 'translateY(-6px) scale(1.02)' },
-          { transform: 'translateY(-3px) scale(1)' },
+          { transform: 'translateY(-6px) scale(1)' },
+          { transform: 'translateY(-10px) scale(1.025)' },
+          { transform: 'translateY(-6px) scale(1)' },
         ],
-        { duration: 320, easing: 'ease-out' }
+        { duration: 340, easing: 'ease-out' }
       );
     }
   }
+
+  // Delegated — survives every re-render of the grid
+  $('gift-grid').addEventListener('click', (e) => {
+    const step = e.target.closest('.gift-stepper button');
+    if (step) {
+      e.stopPropagation();
+      changeQty(step.closest('.gift-card').dataset.id, step.dataset.act === 'inc' ? 1 : -1);
+      return;
+    }
+    const card = e.target.closest('.gift-card');
+    if (card) addItem(card.dataset.id);
+  });
 
   // ---------- Cart render ----------
   function renderCart() {
     const list = $('cart-items');
     const empty = $('cart-empty');
     const totalWrap = $('cart-total-wrap');
-    const count = $('cart-count');
 
     const entries = Object.entries(cart);
-    const itemCount = entries.reduce((sum, [, q]) => sum + q, 0);
 
-    count.textContent = itemCount === 1 ? '1 item' : `${itemCount} items`;
+    // Sync gift cards
+    document.querySelectorAll('.gift-card').forEach(card => {
+      const qty = cart[card.dataset.id] || 0;
+      card.classList.toggle('in-cart', qty > 0);
+      card.querySelector('.gift-stepper-qty').textContent = qty || 1;
+    });
 
     if (entries.length === 0) {
       empty.hidden = false;
       list.innerHTML = '';
       totalWrap.hidden = true;
-      document.querySelectorAll('.gift-card').forEach(c => {
-        c.classList.remove('in-cart');
-        c.querySelector('.gift-qty-badge')?.remove();
-      });
       updateGrandTotal();
       return;
     }
@@ -599,79 +1159,126 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
       if (!item) return '';
       const line = item.price * qty;
       subtotal += line;
+      const thumb = item.image
+        ? `<img src="${item.image}" alt="" loading="lazy" />`
+        : `<span>${item.emoji || '🎁'}</span>`;
       return `
         <li data-id="${id}">
+          <div class="cart-thumb">${thumb}</div>
           <div class="cart-item-info">
-            <span class="cart-item-name">${item.emoji || '🎁'} ${item.name}</span>
-            <span class="cart-item-line-price">₦${item.price.toLocaleString()} × ${qty} = ₦${line.toLocaleString()}</span>
+            <span class="cart-item-name">${item.name}</span>
+            <span class="cart-item-sub">${money(item.price)} × ${qty} = ${money(line)}</span>
           </div>
-          <div class="qty-controls">
-            <button type="button" class="qty-btn" data-act="dec" data-id="${id}" aria-label="Decrease">−</button>
-            <span class="qty-value">${qty}</span>
-            <button type="button" class="qty-btn" data-act="inc" data-id="${id}" aria-label="Increase">+</button>
+          <div class="cart-item-ctrl">
+            <div class="qty-controls">
+              <button type="button" class="qty-btn" data-act="dec" aria-label="Decrease">−</button>
+              <span class="qty-value">${qty}</span>
+              <button type="button" class="qty-btn" data-act="inc" aria-label="Increase">+</button>
+            </div>
+            <button type="button" class="remove-btn" data-act="rm" aria-label="Remove ${item.name}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
         </li>
       `;
     }).join('');
 
-    $('cart-total').textContent = `₦${subtotal.toLocaleString()}`;
-
-    // Sync card selected state + quantity badges
-    document.querySelectorAll('.gift-card').forEach(card => {
-      const id = card.dataset.id;
-      const qty = cart[id];
-      card.classList.toggle('in-cart', !!qty);
-
-      let badge = card.querySelector('.gift-qty-badge');
-      if (qty) {
-        if (!badge) {
-          badge = document.createElement('div');
-          badge.className = 'gift-qty-badge';
-          card.appendChild(badge);
-        }
-        badge.textContent = qty;
-        // Change button label
-        const btn = card.querySelector('.gift-add-btn');
-        if (btn) btn.textContent = 'Add another';
-      } else {
-        badge?.remove();
-        const btn = card.querySelector('.gift-add-btn');
-        if (btn) btn.textContent = 'Add to basket';
-      }
-    });
-
-    // Bind qty buttons
-    list.querySelectorAll('.qty-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const act = btn.dataset.act;
-        if (act === 'inc') cart[id] += 1;
-        else {
-          cart[id] -= 1;
-          if (cart[id] <= 0) {
-            delete cart[id];
-            const item = GIFTS.items.find(i => i.id === id);
-            showToast(`Removed ${item.name}`);
-          }
-        }
-        renderCart();
-      });
-    });
-
+    $('cart-total').textContent = money(subtotal);
     updateGrandTotal();
   }
 
-  function updateGrandTotal() {
+  // Delegated — survives every re-render of the list
+  $('cart-items').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.closest('li').dataset.id;
+    const act = btn.dataset.act;
+    if (act === 'rm') {
+      const item = GIFTS.items.find(i => i.id === id);
+      delete cart[id];
+      if (item) showToast(`Removed ${item.name}`);
+      renderCart();
+      return;
+    }
+    changeQty(id, act === 'inc' ? 1 : -1);
+  });
+
+  function cartCount() {
+    return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  }
+
+  function grandTotalValue() {
     const itemsTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
       const item = GIFTS.items.find(i => i.id === id);
       return sum + (item ? item.price * qty : 0);
     }, 0);
-    const custom = Math.max(0, Number($('custom-amount').value || 0));
-    $('grand-total').textContent = `₦${(itemsTotal + custom).toLocaleString()}`;
+    return itemsTotal + Math.max(0, Number($('custom-amount').value || 0));
   }
 
-  $('custom-amount')?.addEventListener('input', updateGrandTotal);
+  function updateGrandTotal() {
+    const total = grandTotalValue();
+    const count = cartCount();
+
+    $('grand-total').textContent = money(total);
+    $('cart-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+
+    // Clear-basket affordance
+    $('clear-cart').hidden = count === 0;
+
+    // Minimum-contribution progress
+    const min = GIFTS.minCustom;
+    const bar = $('min-progress');
+    const fill = $('min-progress-fill');
+    const text = $('min-progress-text');
+    const pct = Math.min(100, Math.round((total / min) * 100));
+    bar.hidden = false;
+    bar.classList.toggle('met', total >= min);
+    fill.style.width = `${pct}%`;
+    text.textContent = total >= min
+      ? 'Minimum contribution reached — thank you!'
+      : `${money(min - total)} more to reach the ${money(min)} minimum.`;
+
+    // Mobile sticky bar
+    const mobileBar = $('mobile-bar');
+    mobileBar.hidden = count === 0 && total === 0;
+    $('mobile-bar-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+    $('mobile-bar-total').textContent = money(total);
+
+    // Disable pay until minimum met
+    $('pay-btn').disabled = total < min;
+  }
+
+  // ---------- Custom amount ----------
+  const amtInput = $('custom-amount');
+  document.querySelectorAll('.amt-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      amtInput.value = chip.dataset.amount;
+      updateGrandTotal();
+    });
+  });
+  amtInput.addEventListener('input', () => {
+    document.querySelectorAll('.amt-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.amount === amtInput.value);
+    });
+    updateGrandTotal();
+  });
+
+  // ---------- Clear basket ----------
+  $('clear-cart').addEventListener('click', () => {
+    if (!cartCount()) return;
+    cart = {};
+    renderCart();
+    showToast('Basket cleared');
+  });
+
+  // ---------- Mobile bar ----------
+  $('mobile-bar-btn').addEventListener('click', () => {
+    $('cart-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
   // ---------- Token gate ----------
   async function init() {
@@ -704,6 +1311,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
   // ---------- Pay ----------
   $('pay-btn')?.addEventListener('click', async () => {
     const btn = $('pay-btn');
+    const label = btn.querySelector('.pay-label');
     const err = $('gift-error');
     err.hidden = true;
 
@@ -712,7 +1320,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     const phone = $('gift-phone').value.trim();
     const anon = $('gift-anon').checked;
     const note = $('gift-message').value.trim();
-    const customAmount = Math.max(0, Number($('custom-amount').value || 0));
+    const customAmount = Math.max(0, Number(amtInput.value || 0));
 
     if (!email) {
       err.textContent = 'Please enter your email for the receipt.';
@@ -730,13 +1338,13 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     const total = itemsTotal + customAmount;
 
     if (total < GIFTS.minCustom) {
-      err.textContent = `Minimum contribution is ₦${GIFTS.minCustom.toLocaleString()}. Please add more items or enter a custom amount.`;
+      err.textContent = `Minimum contribution is ${money(GIFTS.minCustom)}. Please add more items or enter a custom amount.`;
       err.hidden = false;
       return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = 'Opening secure checkout…';
+    label.textContent = 'Opening secure checkout…';
 
     try {
       const res = await fetch(API, {
@@ -753,7 +1361,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
         err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
         err.hidden = false;
         btn.disabled = false;
-        btn.innerHTML = 'Pay with Paystack';
+        label.textContent = 'Pay with Paystack';
         return;
       }
       window.location.href = data.authorization_url;
@@ -761,7 +1369,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
       err.textContent = 'Connection error. Please try again.';
       err.hidden = false;
       btn.disabled = false;
-      btn.innerHTML = 'Pay with Paystack';
+      label.textContent = 'Pay with Paystack';
     }
   });
 
@@ -790,7 +1398,11 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
         await navigator.clipboard.writeText(btn.dataset.copy);
         const old = btn.textContent;
         btn.textContent = 'Copied!';
-        setTimeout(() => (btn.textContent = old), 1500);
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.classList.remove('copied');
+        }, 1500);
       } catch {}
     });
   });

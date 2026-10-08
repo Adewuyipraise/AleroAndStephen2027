@@ -27,7 +27,7 @@ export const wedding = {
     whiteWedding: { hidden: true, label: 'Virtual — details shared privately with bespoke guests' },
     reception: {
       hidden: false,
-      label: 'Eddies Event Centre Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
+      label: 'Eddies Event Centre, Plot 2, Ajara Seje, Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
     },
   },
 
@@ -46,21 +46,21 @@ export const wedding = {
       event: 'Traditional / Engagement',
       date: 'Friday, 16 April 2027',
       time: '10:00 AM – 2:00 PM',
-      venue: 'Venue:',
+      venue: 'Elite Event Center, Ajara Topa, Badagry. (Directly behind the Palace of the Oba of Ajara Topa)',
       public: false,
     },
     {
       event: 'White Wedding',
       date: 'Saturday, 17 April 2027',
       time: '8:30 AM – 11:30 AM',
-      venue: 'Venue:',
+      venue: '2. Elite Event Garden Ajara Topa, Badagry. (Directly behind the Palace of the Oba of Ajara Topa)',
       public: false,
     },
     {
       event: 'Reception Party',
       date: 'Saturday, 17 April 2027',
       time: '1:00 PM – Late',
-      venue: 'Eddies Event Centre Agric Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
+      venue: 'Eddies Event Centre, Plot 2, Ajara Seje, Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria',
       public: true,
     },
   ],
@@ -90,7 +90,7 @@ export const wedding = {
   schedule: [
     { day: 'Fri, 16 April 2027', time: '10:00 AM – 2:00 PM', event: 'Traditional / Engagement', venue: 'Virtual — details shared privately' },
     { day: 'Sat, 17 April 2027', time: '8:30 AM – 11:30 AM', event: 'White Wedding', venue: 'Virtual — details shared privately' },
-    { day: 'Sat, 17 April 2027', time: '1:00 PM – Late', event: 'Reception Party', venue: 'Agric Road, Ajara Topa, Badagry, Lagos' },
+    { day: 'Sat, 17 April 2027', time: '1:00 PM – Late', event: 'Reception Party', venue: 'Eddies Event Centre, Plot 2, Ajara Seje, Road (beside Gbenopo Primary School), Ajara Topa, Badagry, Lagos State, Nigeria' },
   ],
 
   dressCode: [
@@ -140,14 +140,14 @@ export const wedding = {
     currencySymbol: '₦',
     minCustom: 10000, // minimum custom amount in ₦
     items: [
-      { id: 'g1', name: 'Standing Mixer',      price: 120000, emoji: '🥣' },
-      { id: 'g2', name: 'Dinner Set (24 pcs)', price: 85000,  emoji: '🍽️' },
-      { id: 'g3', name: 'Blender',             price: 45000,  emoji: '🥤' },
-      { id: 'g4', name: 'Bedding Set',         price: 95000,  emoji: '🛏️' },
-      { id: 'g5', name: 'Cookware Set',        price: 150000, emoji: '🍳' },
-      { id: 'g6', name: 'Honeymoon Fund',      price: 50000,  emoji: '✈️' },
+      { id: 'g1', name: 'Standing Mixer',      price: 220000, emoji: '🥣', image: '/gifts/1.jpg' },
+      { id: 'g2', name: 'Dinner Set (24 pcs)', price: 85000,  emoji: '🍽️', image: '/gifts/2.jpg' },   
+      { id: 'g3', name: 'Blender',             price: 45000,  emoji: '🥤', image: '/gifts/3.jpg' },
+      { id: 'g4', name: 'Bedding Set',         price: 95000,  emoji: '🛏️', image: '/gifts/4.jpg' },
+      { id: 'g5', name: 'Cookware Set',        price: 150000, emoji: '🍳', image: '/gifts/5.jpg' },
+      { id: 'g6', name: 'Honeymoon Fund',      price: 1500000,  emoji: '✈️', image: '/gifts/6.jpg' },
     ],
     note: 'Charges are in Naira (₦). If you are paying from a foreign bank, your card issuer will convert automatically.',
-    paystackPublicKey: 'pk_test_df902ea71c84fdf6c134f706be0fd6d90fc8c709',
+    paystackPublicKey: import.meta.env.PUBLIC_PAYSTACK_KEY,
   },
 };

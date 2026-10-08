@@ -53,22 +53,47 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 24px;
+    gap: 18px;
+  }
+  .grid > div {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 28px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .grid > div:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #e8dfcd;
   }
   .k {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
     color: var(--gold);
-    margin: 0 0 6px;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .v { font-size: 16px; margin: 0; }
+  .k::before {
+    content: '';
+    width: 16px;
+    height: 1px;
+    background: var(--gold);
+    flex: none;
+  }
+  .v { font-size: 16px; margin: 0; line-height: 1.5; }
   .tier-note {
     margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--line);
+    padding: 18px 24px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
     font-size: 14px;
     color: var(--muted);
+    background: rgba(255, 255, 255, 0.55);
   }
 </style>
 

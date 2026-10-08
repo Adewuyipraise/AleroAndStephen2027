@@ -18,17 +18,17 @@ const { title = 'Alero & Stephen — 16–17 April 2027' } = Astro.props;
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Alero & Stephen — 16–17 April 2027" />
     <meta property="og:description" content="We're getting married. Join us on 16–17 April 2027." />
-    <meta property="og:image" content="/images/1.jpg" />
+    <meta property="og:image" content="/images/1.png" />
     <meta property="og:url" content={Astro.url} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Alero & Stephen — 16–17 April 2027" />
     <meta name="twitter:description" content="We're getting married. Join us on 16–17 April 2027." />
-    <meta name="twitter:image" content="/images/1.jpg" />
+    <meta name="twitter:image" content="/images/1.png" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/images/1.jpg" />
+    <link rel="apple-touch-icon" href="/images/1.png" />
   </head>
   <body>
     <slot />
@@ -38,8 +38,13 @@ const { title = 'Alero & Stephen — 16–17 April 2027' } = Astro.props;
         --ink: #1e1e1c;
         --muted: #6b6560;
         --gold: #a89274;
+        --gold-soft: #e8d5b0;
         --line: #e3ddd2;
         --green: #4a6b52;
+        --card: #ffffff;
+        --radius: 18px;
+        --shadow-sm: 0 2px 10px -6px rgba(30, 30, 28, 0.25);
+        --shadow-md: 0 22px 48px -30px rgba(30, 30, 28, 0.55);
       }
       * { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
@@ -50,20 +55,31 @@ const { title = 'Alero & Stephen — 16–17 April 2027' } = Astro.props;
         color: var(--ink);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow-x: hidden;
       }
+      ::selection { background: var(--gold-soft); color: var(--ink); }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 11px; height: 11px; }
+      ::-webkit-scrollbar-track { background: var(--cream); }
+      ::-webkit-scrollbar-thumb { background: #d8d0c2; border-radius: 999px; border: 3px solid var(--cream); }
+      ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
       h1, h2, h3, .serif {
         font-family: 'Cormorant Garamond', Georgia, serif;
         font-weight: 400;
         letter-spacing: 0.01em;
       }
       a { color: inherit; }
+      img { max-width: 100%; }
       .container {
         max-width: 900px;
         margin: 0 auto;
         padding: 0 24px;
       }
       .section {
-        padding: 80px 0;
+        padding: 88px 0;
         border-top: 1px solid var(--line);
       }
       .section-label {
@@ -72,32 +88,119 @@ const { title = 'Alero & Stephen — 16–17 April 2027' } = Astro.props;
         font-size: 11px;
         color: var(--gold);
         margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .section-label::before {
+        content: '';
+        width: 26px;
+        height: 1px;
+        background: var(--gold);
+        flex: none;
       }
       .section-title {
-        font-size: clamp(32px, 5vw, 44px);
+        font-size: clamp(32px, 5vw, 46px);
         margin: 0 0 40px;
         font-weight: 400;
+        line-height: 1.08;
       }
       .muted { color: var(--muted); }
+
+      /* Buttons */
       .btn {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         padding: 14px 28px;
         border: 1px solid var(--ink);
         background: var(--ink);
         color: var(--cream);
         text-decoration: none;
-        font-size: 13px;
+        font-size: 12.5px;
         letter-spacing: 0.15em;
         text-transform: uppercase;
         cursor: pointer;
-        transition: background 0.2s, color 0.2s;
+        border-radius: 999px;
+        transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.15s, box-shadow 0.25s;
+        box-shadow: 0 10px 24px -16px rgba(30, 30, 28, 0.8);
       }
-      .btn:hover { background: transparent; color: var(--ink); }
-      .btn.ghost { background: transparent; color: var(--ink); }
+      .btn:hover { background: transparent; color: var(--ink); transform: translateY(-2px); box-shadow: none; }
+      .btn:active { transform: translateY(0); }
+      .btn.ghost { background: transparent; color: var(--ink); box-shadow: none; }
       .btn.ghost:hover { background: var(--ink); color: var(--cream); }
+      .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+      /* Scroll reveal */
+      [data-reveal] {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+        transition-delay: var(--reveal-delay, 0ms);
+      }
+      [data-reveal].revealed { opacity: 1; transform: none; }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        [data-reveal] { opacity: 1; transform: none; transition: none; }
+        .btn:hover { transform: none; }
+        * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+      }
+
       @media (max-width: 640px) {
-        .section { padding: 56px 0; }
+        .section { padding: 60px 0; }
       }
     </style>
+
+    <script>
+      // Fade-up reveal on scroll.
+      // Safety first: anything not yet revealed becomes visible after a short
+      // delay, so a stalled IntersectionObserver can never hide the page.
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const revealAll = () => {
+        document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('revealed'));
+      };
+
+      if (reduce || !('IntersectionObserver' in window)) {
+        revealAll();
+      } else {
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('revealed');
+            io.unobserve(entry.target);
+          });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+
+        const mark = (el, delay = 0) => {
+          el.setAttribute('data-reveal', '');
+          if (delay) el.style.setProperty('--reveal-delay', `${delay}ms`);
+          io.observe(el);
+        };
+
+        document.querySelectorAll('.section').forEach((section) => {
+          const label = section.querySelector('.section-label');
+          const title = section.querySelector('.section-title');
+          if (label) mark(label, 0);
+          if (title) mark(title, 70);
+        });
+
+        // Anything already in the viewport on load reveals immediately.
+        requestAnimationFrame(() => {
+          document.querySelectorAll('[data-reveal]').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (r.top < window.innerHeight && r.bottom > 0) {
+              el.classList.add('revealed');
+              io.unobserve(el);
+            }
+          });
+        });
+
+        // Failsafe: never leave content hidden.
+        setTimeout(revealAll, 2500);
+      }
+    </script>
   </body>
 </html>
