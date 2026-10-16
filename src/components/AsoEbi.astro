@@ -2,7 +2,7 @@
 import { wedding } from '../data/wedding.js';
 import CollapsibleSection from './CollapsibleSection.astro';
 const { asoEbi } = wedding;
-const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKYA_dk0S1LKR9gr_ByZCC6w/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
 
 const money = (n) => `₦${Number(n).toLocaleString()}`;
 ---
@@ -381,18 +381,18 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     label.textContent = 'Opening secure checkout…';
 
     try {
-      const res = await fetch(API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify({
-          action: 'init-asoebi',
-          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
-          items, amount: total, email, name, phone, note,
-        }),
-      });
-      const data = await res.json();
+        const url = new URL(API);
+        url.searchParams.set('action', 'init-asoebi');
+        url.searchParams.set('token', window.__inviteToken || new URLSearchParams(location.search).get('invite') || '');
+        url.searchParams.set('items', JSON.stringify(items));
+        url.searchParams.set('amount', String(total));
+        url.searchParams.set('email', email);
+        url.searchParams.set('name', name);
+        url.searchParams.set('phone', phone);
+        url.searchParams.set('note', note);
+
+        const res = await fetch(url.toString(), { method: 'GET' });
+        const data = await res.json();
       if (!data.ok) {
         err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
         err.hidden = false;

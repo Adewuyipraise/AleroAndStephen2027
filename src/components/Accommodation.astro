@@ -1,7 +1,7 @@
 ---
 import { wedding } from '../data/wedding.js';
 import CollapsibleSection from './CollapsibleSection.astro';
-const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKYA_dk0S1LKR9gr_ByZCC6w/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
 
 // Fallback hotel data if the API fails — mirrors HotelInventory sheet
 const fallbackHotels = [
@@ -471,26 +471,22 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     label.textContent = 'Opening secure checkout…';
 
     try {
-      const res = await fetch(API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify({
-          action: 'init-accommodation',
-          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
-          hotel: selectedHotel.hotel.name,
-          roomType: selectedHotel.room.type,
-          nights: nights,
-          price: selectedHotel.room.price,
-          amount: total,
-          email, name, phone,
-          checkIn: checkin,
-          checkOut: checkout,
-          note,
-        }),
-      });
-      const data = await res.json();
+        const url = new URL(API);
+        url.searchParams.set('action', 'init-accommodation');
+        url.searchParams.set('token', window.__inviteToken || new URLSearchParams(location.search).get('invite') || '');
+        url.searchParams.set('hotel', selectedHotel.hotel.name);
+        url.searchParams.set('roomType', selectedHotel.room.type);
+        url.searchParams.set('nights', String(nights));
+        url.searchParams.set('price', String(selectedHotel.room.price));
+        url.searchParams.set('email', email);
+        url.searchParams.set('name', name);
+        url.searchParams.set('phone', phone);
+        url.searchParams.set('checkIn', checkin);
+        url.searchParams.set('checkOut', checkout);
+        url.searchParams.set('note', note);
+
+        const res = await fetch(url.toString(), { method: 'GET' });
+        const data = await res.json();
 
       if (!data.ok) {
         err.textContent = 'Could not start payment: ' + (data.error || 'unknown');

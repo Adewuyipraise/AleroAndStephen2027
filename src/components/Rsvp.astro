@@ -259,11 +259,14 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
     payload.guestType = window.__guestType;
 
     try {
-      const res = await fetch(API, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+        const url = new URL(API);
+        url.searchParams.set('action', 'rsvp');
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+        });
+
+        const res = await fetch(url.toString(), { method: 'GET' });
+        const data = await res.json();
 
       if (data.ok) {
         show('rsvp-done');
