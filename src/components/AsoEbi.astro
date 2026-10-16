@@ -409,5 +409,28 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     }
   });
 
+  window.addEventListener('load', async () => {
+    const params = new URLSearchParams(location.search);
+    const reference = params.get('reference') || params.get('trxref');
+    if (!reference) return;
+
+    // Prevent duplicate verify runs across sections
+    const guardKey = 'verify_started_' + reference;
+    if (sessionStorage.getItem(guardKey)) {
+      history.replaceState({}, '', location.pathname + location.hash);
+      return;
+    }
+    sessionStorage.setItem(guardKey, '1');
+
+    try {
+      const r = await fetch(`${API}?action=verify-payment&reference=${reference}`);
+      const d = await r.json();
+      if (d.valid) {
+        showToast('Thank you! Your payment has been received.');
+      }
+    } catch {}
+    history.replaceState({}, '', location.pathname + location.hash);
+  });
+
   setTimeout(init, 100);
 </script>
