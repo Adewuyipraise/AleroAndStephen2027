@@ -473,6 +473,9 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     try {
       const res = await fetch(API, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify({
           action: 'init-accommodation',
           token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),

@@ -532,6 +532,9 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     try {
       const res = await fetch(API, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify({
           action: 'init-gift',
           token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
