@@ -1,0 +1,410 @@
+---
+import { wedding } from '../data/wedding.js';
+import CollapsibleSection from './CollapsibleSection.astro';
+const { asoEbi } = wedding;
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKYA_dk0S1LKR9gr_ByZCC6w/exec';
+
+const money = (n) => `₦${Number(n).toLocaleString()}`;
+---
+<CollapsibleSection
+  id="asoebi"
+  label="Dress with us"
+  title="Aso Ebi"
+  summaryTitle="Dress in style with us"
+  summaryText="Aso Ebi is the coordinated fabric for our traditional wedding. Choose your side — bride's or groom's — order your fabric, and pick up at the venue."
+  buttonText="View Aso Ebi Options"
+  containerClass="container-wide"
+>
+  <div id="asoebi-loading" class="state">
+    <p class="muted">Verifying your invitation…</p>
+  </div>
+
+  <div id="asoebi-locked" class="state" hidden>
+    <h3 class="serif">Aso Ebi is for invited guests.</h3>
+    <p class="muted">
+      Please use the personalised link sent to you by the couple or the
+      event planner to view this section.
+    </p>
+  </div>
+
+  <div id="asoebi-content" hidden>
+    <p class="asoebi-deadline">
+      <strong>Orders close: {asoEbi.closeDate}</strong>
+    </p>
+
+    <div class="co-grid co-grid--compact" id="asoebi-grid"></div>
+
+    <!-- BASKET -->
+    <aside class="co-order" id="asoebi-cart-panel">
+      <button type="button" class="co-order-head" id="asoebi-cart-toggle" aria-expanded="false">
+        <span class="co-order-head-left">
+          <span class="co-order-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+              <path d="M3 6h18"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </span>
+          <span class="co-order-titles">
+            <span class="co-order-title">Your aso ebi order</span>
+            <span class="co-order-count" id="asoebi-cart-count">0 items</span>
+          </span>
+        </span>
+        <svg class="co-order-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      <div class="co-order-body" id="asoebi-cart-body" hidden>
+        <!-- LEFT: items -->
+        <div class="co-col">
+          <div id="asoebi-cart-empty" class="co-empty">
+            <div class="ico" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                <path d="M3 6h18"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </div>
+            <p class="t">Your basket is empty</p>
+            <p class="s">Add a fabric above to get started.</p>
+          </div>
+
+          <ul id="asoebi-cart-items" class="co-items"></ul>
+
+          <div class="co-subtotal" id="asoebi-cart-total-wrap" hidden>
+            <span>Subtotal</span>
+            <strong id="asoebi-cart-total">₦0</strong>
+          </div>
+        </div>
+
+        <!-- RIGHT: details + checkout -->
+        <div class="co-col">
+          <p class="co-kicker">Your details</p>
+          <div class="co-fields">
+            <label class="co-field">Your name
+              <input type="text" id="asoebi-name" placeholder="Jane Doe" />
+            </label>
+            <label class="co-field">Email (for receipt)
+              <input type="email" id="asoebi-email" placeholder="you@example.com" required />
+            </label>
+            <label class="co-field wide">Phone (WhatsApp)
+              <input type="tel" id="asoebi-phone" placeholder="+234..." />
+            </label>
+            <label class="co-field wide">Notes (optional — e.g. pickup contact)
+              <textarea id="asoebi-note" rows="2" placeholder="Any special requests?"></textarea>
+            </label>
+          </div>
+
+          <div class="co-total">
+            <span>Total to pay</span>
+            <strong id="asoebi-grand-total">₦0</strong>
+          </div>
+
+          <button class="co-pay" id="asoebi-pay-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <span class="pay-label">Buy Now</span>
+          </button>
+          <p class="co-note">
+            Fabric will be available for pickup at the wedding venue.
+            Orders close {asoEbi.closeDate}.
+          </p>
+          <p class="co-error" id="asoebi-error" hidden></p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</CollapsibleSection>
+
+<style>
+  .state { max-width: 720px; }
+
+  .asoebi-deadline {
+    text-align: center;
+    padding: 14px 20px;
+    background: #fdfaf3;
+    border: 1px solid #eadfc9;
+    border-radius: 14px;
+    margin: 0 0 26px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .asoebi-deadline strong { color: var(--gold); font-weight: 600; }
+</style>
+
+<script define:vars={{ API, ASOEBI: asoEbi }}>
+  const $ = (id) => document.getElementById(id);
+  let cart = {};
+  const money = (n) => `₦${Number(n).toLocaleString()}`;
+
+  const cartToggle = $('asoebi-cart-toggle');
+  const cartBody = $('asoebi-cart-body');
+  cartToggle?.addEventListener('click', () => {
+    const isOpen = !cartBody.hidden;
+    cartBody.hidden = isOpen;
+    cartToggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  function renderAsoEbiGrid() {
+    const grid = $('asoebi-grid');
+    grid.innerHTML = ASOEBI.items.map((item, i) => `
+      <div class="co-card" data-id="${item.id}" style="--d:${i * 70}ms">
+        <div class="co-media${item.image ? ' has-img' : ''}">
+          ${item.image
+            ? `<img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.closest('.co-media').classList.remove('has-img');this.remove();" />`
+            : `<span class="co-media-fallback" aria-hidden="true">
+                 <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                   <path d="M3 6 6 3h12l3 3-3 3v12H6V9L3 6z"/>
+                   <path d="M9 3v6a3 3 0 0 0 6 0V3"/>
+                 </svg>
+               </span>`
+          }
+          <span class="co-badge" aria-hidden="true">✓</span>
+        </div>
+        <div class="co-body">
+          <p class="co-eyebrow">${item.side}</p>
+          <h3 class="co-name">${item.name}</h3>
+          <p class="co-price">${money(item.price)} <span class="per">per ${item.unit}</span></p>
+        </div>
+        <div class="co-foot">
+          <button type="button" class="co-add" data-add="${item.id}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Add to basket
+          </button>
+          <div class="co-stepper">
+            <button type="button" data-act="dec" aria-label="Decrease">−</button>
+            <span class="qty" aria-live="polite">1</span>
+            <button type="button" data-act="inc" aria-label="Increase">+</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function changeQty(id, delta) {
+    const item = ASOEBI.items.find(i => i.id === id);
+    if (!item) return;
+    const next = (cart[id] || 0) + delta;
+    if (next <= 0) {
+      if (cart[id]) delete cart[id];
+    } else {
+      cart[id] = next;
+    }
+    renderCart();
+  }
+
+  function addItem(id) {
+    const item = ASOEBI.items.find(i => i.id === id);
+    if (!item) return;
+    cart[id] = (cart[id] || 0) + 1;
+    renderCart();
+    if (Object.keys(cart).length === 1 && cartBody.hidden) {
+      cartBody.hidden = false;
+      cartToggle.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  $('asoebi-grid').addEventListener('click', (e) => {
+    const step = e.target.closest('.co-stepper button');
+    if (step) {
+      e.stopPropagation();
+      changeQty(step.closest('.co-card').dataset.id, step.dataset.act === 'inc' ? 1 : -1);
+      return;
+    }
+    const addBtn = e.target.closest('.co-add');
+    if (addBtn) {
+      addItem(addBtn.dataset.add);
+    }
+  });
+
+  function renderCart() {
+    const list = $('asoebi-cart-items');
+    const empty = $('asoebi-cart-empty');
+    const totalWrap = $('asoebi-cart-total-wrap');
+    const entries = Object.entries(cart);
+
+    document.querySelectorAll('#asoebi-grid .co-card').forEach(card => {
+      const qty = cart[card.dataset.id] || 0;
+      card.classList.toggle('is-active', qty > 0);
+      const stepperQty = card.querySelector('.co-stepper .qty');
+      if (stepperQty) stepperQty.textContent = qty || 1;
+    });
+
+    if (entries.length === 0) {
+      empty.hidden = false;
+      list.innerHTML = '';
+      totalWrap.hidden = true;
+      updateTotal();
+      return;
+    }
+
+    empty.hidden = true;
+    totalWrap.hidden = false;
+
+    let subtotal = 0;
+    list.innerHTML = entries.map(([id, qty]) => {
+      const item = ASOEBI.items.find(i => i.id === id);
+      if (!item) return '';
+      const line = item.price * qty;
+      subtotal += line;
+      return `
+        <li data-id="${id}">
+          <div class="co-thumb"><span>🧵</span></div>
+          <div class="co-item-info">
+            <span class="co-item-name">${item.name} — ${item.side}</span>
+            <span class="co-item-sub">${money(item.price)} × ${qty} = ${money(line)}</span>
+          </div>
+          <div class="co-item-ctrl">
+            <div class="co-qty">
+              <button type="button" data-act="dec" aria-label="Decrease">−</button>
+              <span class="v">${qty}</span>
+              <button type="button" data-act="inc" aria-label="Increase">+</button>
+            </div>
+            <button type="button" class="co-remove" data-act="rm" aria-label="Remove">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </li>
+      `;
+    }).join('');
+
+    $('asoebi-cart-total').textContent = money(subtotal);
+    updateTotal();
+  }
+
+  $('asoebi-cart-items').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.closest('li').dataset.id;
+    const act = btn.dataset.act;
+    if (act === 'rm') {
+      delete cart[id];
+      renderCart();
+      return;
+    }
+    changeQty(id, act === 'inc' ? 1 : -1);
+  });
+
+  function cartCount() {
+    return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  }
+  function cartTotal() {
+    return Object.entries(cart).reduce((sum, [id, qty]) => {
+      const item = ASOEBI.items.find(i => i.id === id);
+      return sum + (item ? item.price * qty : 0);
+    }, 0);
+  }
+
+  function updateTotal() {
+    const total = cartTotal();
+    const count = cartCount();
+    $('asoebi-grand-total').textContent = money(total);
+    $('asoebi-cart-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+    $('asoebi-pay-btn').disabled = total <= 0;
+  }
+
+  // See Registry.astro — registry endpoint first, `validate` fallback, and never
+  // lock a guest out when the API is simply unreachable.
+  async function checkInvite(token) {
+    const enc = encodeURIComponent(token);
+    const endpoints = [
+      `${API}?action=registry&token=${enc}`,
+      `${API}?action=validate&token=${enc}`,
+    ];
+    let explicitlyInvalid = false;
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && (data.valid === true || data.reason === 'already_used')) return true;
+        if (data && data.valid === false) explicitlyInvalid = true;
+      } catch { /* try the next endpoint */ }
+    }
+    return explicitlyInvalid ? false : 'unreachable';
+  }
+
+  async function init() {
+    const token = window.__inviteToken
+      || (new URLSearchParams(location.search).get('invite') || '').toUpperCase().trim();
+
+    if (!token) {
+      $('asoebi-loading').hidden = true;
+      $('asoebi-locked').hidden = false;
+      return;
+    }
+
+    const verdict = await checkInvite(token);
+    $('asoebi-loading').hidden = true;
+    if (verdict === false) {
+      $('asoebi-locked').hidden = false;
+      return;
+    }
+    $('asoebi-content').hidden = false;
+    renderAsoEbiGrid();
+    renderCart();
+  }
+
+  $('asoebi-pay-btn')?.addEventListener('click', async () => {
+    const btn = $('asoebi-pay-btn');
+    const label = btn.querySelector('.pay-label');
+    const err = $('asoebi-error');
+    err.hidden = true;
+
+    const email = $('asoebi-email').value.trim();
+    const name = $('asoebi-name').value.trim();
+    const phone = $('asoebi-phone').value.trim();
+    const note = $('asoebi-note').value.trim();
+
+    if (!email) {
+      err.textContent = 'Please enter your email for the receipt.';
+      err.hidden = false;
+      $('asoebi-email').focus();
+      return;
+    }
+    if (cartCount() === 0) {
+      err.textContent = 'Your basket is empty.';
+      err.hidden = false;
+      return;
+    }
+
+    const items = Object.entries(cart).map(([id, qty]) => {
+      const item = ASOEBI.items.find(i => i.id === id);
+      return { name: `${item.name} (${item.side})`, qty, price: item.price };
+    });
+    const total = cartTotal();
+
+    btn.disabled = true;
+    label.textContent = 'Opening secure checkout…';
+
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'init-asoebi',
+          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
+          items, amount: total, email, name, phone, note,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
+        err.hidden = false;
+        btn.disabled = false;
+        label.textContent = 'Buy Now';
+        return;
+      }
+      window.location.href = data.authorization_url;
+    } catch {
+      err.textContent = 'Connection error. Please try again.';
+      err.hidden = false;
+      btn.disabled = false;
+      label.textContent = 'Buy Now';
+    }
+  });
+
+  setTimeout(init, 100);
+</script>

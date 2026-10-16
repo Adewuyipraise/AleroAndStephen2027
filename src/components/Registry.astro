@@ -1,1033 +1,224 @@
 ---
 import { wedding } from '../data/wedding.js';
+import CollapsibleSection from './CollapsibleSection.astro';
 const { registry, gifts } = wedding;
-const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKYA_dk0S1LKR9gr_ByZCC6w/exec';
 const quickAmounts = [10000, 25000, 50000, 100000];
 ---
-<section id="registry" class="section">
-  <div class="container registry-container">
-    <p class="section-label">With love</p>
-    <h2 class="section-title">Registry</h2>
-    <p class="muted intro">
-      Your presence is the greatest gift. If your heart moves you to give,
-      pick something from our registry below, or send directly to our
-      accounts.
+<CollapsibleSection
+  id="registry"
+  label="With love"
+  title="Registry"
+  summaryTitle="Send a gift"
+  summaryText="Browse our gift registry, contribute to our honeymoon fund, or send directly to our accounts. Every gift, big or small, means the world to us."
+  buttonText="Open Registry"
+  containerClass="container-wide"
+>
+  <div id="registry-loading" class="state">
+    <p class="muted">Verifying your invitation…</p>
+  </div>
+
+  <div id="registry-locked" class="state" hidden>
+    <h3 class="serif">Gift details are for invited guests.</h3>
+    <p class="muted">
+      Please use the personalised link sent to you by the couple or the
+      event planner to view this section.
     </p>
+  </div>
 
-    <div id="registry-loading" class="state">
-      <p class="muted">Verifying your invitation…</p>
-    </div>
-
-    <div id="registry-locked" class="state" hidden>
-      <h3 class="serif">Gift details are for invited guests.</h3>
-      <p class="muted">
-        Please use the personalised link sent to you by the couple or the
-        event planner to view this section.
+  <div id="gift-content" hidden>
+    <div class="co-head">
+      <p class="co-kicker">Step 1</p>
+      <h3 class="serif co-title">Choose a gift</h3>
+      <p class="muted co-intro">
+        Tap any item to add it to your basket, then adjust the quantity as you like.
       </p>
     </div>
 
-    <div id="gift-content" hidden>
-      <div class="shop">
-        <!-- ================= GIFTS ================= -->
-        <div class="gifts-col">
-          <div class="col-head">
-            <p class="block-kicker">Step 1</p>
-            <h3 class="serif block-title">Choose a gift</h3>
-            <p class="muted cart-intro">
-              Tap any item to add it to your basket, then adjust the quantity
-              as you like.
-            </p>
-          </div>
-          <div class="gift-grid" id="gift-grid"></div>
-        </div>
+    <div class="co-grid" id="gift-grid"></div>
 
-        <!-- ================= DETAILS ================= -->
-        <div class="details-col">
-          <div class="col-head">
-            <p class="block-kicker">Step 2</p>
-            <h3 class="serif block-title">Your details</h3>
-          </div>
+    <!-- BASKET (collapsible) -->
+    <aside class="co-order" id="cart-panel">
+      <button type="button" class="co-order-head" id="cart-toggle" aria-expanded="false">
+        <span class="co-order-head-left">
+          <span class="co-order-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+              <path d="M3 6h18"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </span>
+          <span class="co-order-titles">
+            <span class="co-order-title">Your basket</span>
+            <span class="co-order-count" id="cart-count">0 items</span>
+          </span>
+        </span>
+        <svg class="co-order-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
 
-          <div class="form-grid">
-            <label>Your name
-              <input type="text" id="gift-name" placeholder="Jane Doe" />
-            </label>
-            <label>Email (for receipt)
-              <input type="email" id="gift-email" placeholder="you@example.com" required />
-            </label>
-            <label>Phone (WhatsApp, optional)
-              <input type="tel" id="gift-phone" placeholder="+234..." />
-            </label>
-            <label class="anon-label">
-              <input type="checkbox" id="gift-anon" />
-              <span>Send anonymously</span>
-            </label>
-          </div>
-
-          <label class="full-width">
-            Message for the couple (optional)
-            <textarea id="gift-message" rows="2" placeholder="A little note…"></textarea>
-          </label>
-        </div>
-
-        <!-- ================= BASKET ================= -->
-        <aside class="basket" id="cart-panel">
-          <div class="cart-header">
-            <h4 class="cart-title">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                <path d="M3 6h18"/>
-                <path d="M16 10a4 4 0 0 1-8 0"/>
-              </svg>
-              Your basket
-            </h4>
-            <span class="cart-count" id="cart-count">0 items</span>
-          </div>
-
-          <button type="button" class="clear-cart" id="clear-cart" hidden>
+      <div class="co-order-body" id="cart-body" hidden>
+        <!-- LEFT: items + amount -->
+        <div class="co-col">
+          <button type="button" class="co-textbtn" id="clear-cart" hidden>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
               <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
             </svg>
             Clear basket
           </button>
 
-          <div id="cart-empty" class="cart-empty">
-            <div class="empty-icon" aria-hidden="true">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <div id="cart-empty" class="co-empty">
+            <div class="ico" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
                 <path d="M3 6h18"/>
                 <path d="M16 10a4 4 0 0 1-8 0"/>
               </svg>
             </div>
-            <p class="empty-title">Your basket is empty</p>
-            <p class="empty-sub">Add a gift above, or send a custom amount below.</p>
+            <p class="t">Your basket is empty</p>
+            <p class="s">Add a gift above, or send a custom amount below.</p>
           </div>
 
-          <ul id="cart-items" class="cart-items"></ul>
+          <ul id="cart-items" class="co-items"></ul>
 
-          <div class="cart-total" id="cart-total-wrap" hidden>
+          <div class="co-subtotal" id="cart-total-wrap" hidden>
             <span>Subtotal</span>
             <strong id="cart-total">₦0</strong>
           </div>
 
-          <div class="custom-amount-wrap">
-            <p class="block-kicker or-line"><span>Or contribute an amount</span></p>
-            <div class="amt-chips">
-              {quickAmounts.map((a) => (
-                <button type="button" class="amt-chip" data-amount={a}>
-                  ₦{a.toLocaleString()}
-                </button>
-              ))}
-            </div>
-            <div class="amount-field">
-              <span class="amount-prefix" aria-hidden="true">₦</span>
-              <input type="number" id="custom-amount" min="10000" step="1000" placeholder="e.g. 50000" aria-label="Custom amount in Naira" />
-            </div>
+          <div class="co-divider"><span>Or contribute an amount</span></div>
+          <div class="co-chips">
+            {quickAmounts.map((a) => (
+              <button type="button" class="co-chip" data-amount={a}>
+                ₦{a.toLocaleString()}
+              </button>
+            ))}
+          </div>
+          <div class="co-amount">
+            <span class="prefix" aria-hidden="true">₦</span>
+            <input type="number" id="custom-amount" min="10000" step="1000" placeholder="e.g. 50000" aria-label="Custom amount in Naira" />
           </div>
 
-          <div class="min-progress" id="min-progress" hidden>
-            <div class="min-progress-track" aria-hidden="true">
-              <span class="min-progress-fill" id="min-progress-fill"></span>
+          <div class="co-progress" id="min-progress" hidden>
+            <div class="co-progress-track" aria-hidden="true">
+              <span class="co-progress-fill" id="min-progress-fill"></span>
             </div>
-            <p class="min-progress-text" id="min-progress-text"></p>
+            <p class="co-progress-text" id="min-progress-text"></p>
+          </div>
+        </div>
+
+        <!-- RIGHT: details + checkout -->
+        <div class="co-col">
+          <p class="co-kicker">Step 2 — Your details</p>
+          <div class="co-fields">
+            <label class="co-field">Your name
+              <input type="text" id="gift-name" placeholder="Jane Doe" />
+            </label>
+            <label class="co-field">Email (for receipt)
+              <input type="email" id="gift-email" placeholder="you@example.com" required />
+            </label>
+            <label class="co-field">Phone (WhatsApp, optional)
+              <input type="tel" id="gift-phone" placeholder="+234..." />
+            </label>
+            <label class="co-field check">
+              <input type="checkbox" id="gift-anon" />
+              <span>Send anonymously</span>
+            </label>
+            <label class="co-field wide">Message for the couple (optional)
+              <textarea id="gift-message" rows="2" placeholder="A little note…"></textarea>
+            </label>
           </div>
 
-          <div class="checkout-total">
+          <div class="co-total">
             <span>Total to pay</span>
             <strong id="grand-total">₦0</strong>
           </div>
 
-          <button class="btn pay-btn" id="pay-btn" type="button">
+          <button class="co-pay" id="pay-btn" type="button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="1" y="4" width="22" height="16" rx="2"/>
               <line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
-            <span class="pay-label">Pay with Paystack</span>
+            <span class="pay-label">Checkout</span>
           </button>
-          <p class="cart-note muted">{gifts.note}</p>
-          <p class="error" id="gift-error" hidden></p>
-        </aside>
+          <p class="co-note">{gifts.note}</p>
+          <p class="co-error" id="gift-error" hidden></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- BANK TRANSFER -->
+    <div class="co-direct">
+      <p class="co-kicker">Prefer a transfer?</p>
+      <h3 class="serif co-title">Or send directly</h3>
+
+      <p class="co-bank-label">Naira transfers</p>
+      <div class="co-banks">
+        {registry.naira.map(acc => (
+          <div class="co-bank">
+            <p class="bank">{acc.bank}</p>
+            <p class="holder">{acc.holder}</p>
+            <p class="num">{acc.number}</p>
+            <button class="copy" data-copy={acc.number}>Copy number</button>
+          </div>
+        ))}
       </div>
 
-      <!-- ================= BANK TRANSFER FALLBACK ================= -->
-      <div class="direct">
-        <div class="col-head">
-          <p class="block-kicker">Prefer a transfer?</p>
-          <h3 class="serif block-title">Or send directly</h3>
+      <p class="co-bank-label">GBP — UK transfers</p>
+      <div class="co-banks">
+        <div class="co-bank">
+          <p class="bank">Lloyds Bank</p>
+          <p class="holder">{registry.gbp.uk.name}</p>
+          <p class="num">Sort code: {registry.gbp.uk.sortCode}</p>
+          <p class="num">Account: {registry.gbp.uk.account}</p>
+          <button class="copy" data-copy={`${registry.gbp.uk.sortCode} ${registry.gbp.uk.account}`}>Copy details</button>
         </div>
+      </div>
 
-        <p class="bank-label">Naira transfers</p>
-        <div class="cards">
-          {registry.naira.map(acc => (
-            <div class="card">
-              <p class="bank">{acc.bank}</p>
-              <p class="holder">{acc.holder}</p>
-              <p class="num">{acc.number}</p>
-              <button class="copy" data-copy={acc.number}>Copy number</button>
-            </div>
-          ))}
-        </div>
-
-        <p class="bank-label">GBP — UK transfers</p>
-        <div class="cards">
-          <div class="card">
-            <p class="bank">Lloyds Bank</p>
-            <p class="holder">{registry.gbp.uk.name}</p>
-            <p class="num">Sort code: {registry.gbp.uk.sortCode}</p>
-            <p class="num">Account: {registry.gbp.uk.account}</p>
-            <button class="copy" data-copy={`${registry.gbp.uk.sortCode} ${registry.gbp.uk.account}`}>Copy details</button>
-          </div>
-        </div>
-
-        <p class="bank-label">International transfers</p>
-        <div class="cards">
-          <div class="card wide">
-            <p class="holder">{registry.gbp.international.name}</p>
-            <p class="num">IBAN: {registry.gbp.international.iban}</p>
-            <p class="num">BIC/SWIFT: {registry.gbp.international.bic}</p>
-            <button class="copy" data-copy={registry.gbp.international.iban}>Copy IBAN</button>
-          </div>
+      <p class="co-bank-label">International transfers</p>
+      <div class="co-banks">
+        <div class="co-bank wide">
+          <p class="holder">{registry.gbp.international.name}</p>
+          <p class="num">IBAN: {registry.gbp.international.iban}</p>
+          <p class="num">BIC/SWIFT: {registry.gbp.international.bic}</p>
+          <button class="copy" data-copy={registry.gbp.international.iban}>Copy IBAN</button>
         </div>
       </div>
     </div>
   </div>
-</section>
+</CollapsibleSection>
 
 <!-- Mobile sticky checkout bar -->
-<div class="mobile-bar" id="mobile-bar" hidden>
-  <div class="mobile-bar-info">
-    <span class="mobile-bar-count" id="mobile-bar-count">0 items</span>
-    <strong class="mobile-bar-total" id="mobile-bar-total">₦0</strong>
+<div class="co-mobilebar" id="mobile-bar" hidden>
+  <div class="info">
+    <span class="count" id="mobile-bar-count">0 items</span>
+    <strong class="tot" id="mobile-bar-total">₦0</strong>
   </div>
-  <button type="button" class="mobile-bar-btn" id="mobile-bar-btn">Review basket</button>
+  <button type="button" class="go" id="mobile-bar-btn">Review basket</button>
 </div>
 
 <!-- Toast -->
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="toast" class="co-toast" role="status" aria-live="polite"></div>
 
 <style>
-  /* `.container` override — this section needs more room for the grid */
-  .registry-container { max-width: 1160px; }
-
   .state { max-width: 720px; }
-  .intro { max-width: 620px; margin: 0 0 44px; }
-
-  /* Components below set explicit `display`, so `hidden` needs reinforcing */
-  [hidden] { display: none !important; }
-
-  .block-kicker {
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    font-size: 10.5px;
-    color: var(--gold);
-    margin: 0 0 8px;
-    font-weight: 500;
-  }
-  .block-title { font-size: clamp(24px, 3vw, 30px); margin: 0 0 8px; font-weight: 400; }
-  .col-head { margin-bottom: 24px; }
-  .cart-intro { max-width: 480px; margin: 0; font-size: 15px; }
-
-  /* ---------------- Layout ---------------- */
-  .shop {
-    display: grid;
-    grid-template-areas: "gifts" "details" "basket";
-    gap: 40px;
-    align-items: start;
-  }
-  .gifts-col { grid-area: gifts; }
-  .details-col { grid-area: details; }
-  .basket { grid-area: basket; }
-
-  @media (min-width: 960px) {
-    .shop {
-      grid-template-areas: "gifts basket" "details basket";
-      grid-template-columns: minmax(0, 1fr) 400px;
-      gap: 32px 40px;
-    }
-  }
-
-  /* ---------------- Gift grid ---------------- */
-
-  /* ---------------- Details form ---------------- */
-  .details-col {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 28px;
-  }
-  .details-col .col-head { margin-bottom: 20px; }
-
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  .form-grid label,
-  .full-width {
-    display: flex; flex-direction: column; gap: 7px;
-    font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.14em; color: var(--muted);
-  }
-  .form-grid input,
-  .full-width textarea {
-    padding: 13px 15px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    font-size: 15px;
-    font-family: inherit;
-    background: #fff;
-    color: var(--ink);
-    text-transform: none;
-    letter-spacing: normal;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .form-grid input:focus,
-  .full-width textarea:focus,
-  .amount-field:focus-within {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(168, 146, 116, 0.16);
-  }
-  .full-width { margin-bottom: 0; }
-  .full-width textarea { resize: vertical; }
-
-  .anon-label {
-    flex-direction: row !important;
-    align-items: center;
-    gap: 10px !important;
-    text-transform: none;
-    letter-spacing: normal;
-    font-size: 14px;
-    color: var(--ink);
-    cursor: pointer;
-    align-self: end;
-    padding-bottom: 12px;
-  }
-  .anon-label input {
-    width: 17px; height: 17px;
-    accent-color: var(--gold);
-    cursor: pointer;
-  }
-
-  /* ---------------- Basket ---------------- */
-  .basket {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    padding: 24px;
-    box-shadow: 0 24px 60px -40px rgba(30, 30, 28, 0.5);
-  }
-  @media (min-width: 960px) {
-    .basket {
-      position: sticky;
-      top: 24px;
-      align-self: start;
-      max-height: calc(100vh - 48px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--line) transparent;
-    }
-    .basket::-webkit-scrollbar { width: 6px; }
-    .basket::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-    .basket::-webkit-scrollbar-track { background: transparent; }
-  }
-
-  .cart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 16px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid var(--line);
-  }
-  .cart-title {
-    display: flex; align-items: center; gap: 9px;
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 21px;
-    margin: 0;
-    font-style: italic;
-    color: var(--ink);
-  }
-  .cart-title svg { color: var(--gold); }
-  .cart-count {
-    font-size: 10.5px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: var(--cream);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 6px 13px;
-    white-space: nowrap;
-    transition: transform 0.25s ease, background 0.25s, color 0.25s;
-  }
-  .cart-count.pulse {
-    transform: scale(1.09);
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #fff;
-  }
-
-  .cart-empty {
-    text-align: center;
-    padding: 26px 10px 22px;
-  }
-  .empty-icon {
-    width: 68px; height: 68px;
-    margin: 0 auto 14px;
-    border-radius: 50%;
-    background: var(--cream);
-    border: 1px dashed var(--line);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold);
-  }
-  .empty-title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 20px;
-    margin: 0 0 5px;
-  }
-  .empty-sub { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.5; }
-
-  .cart-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 15px 0;
-    border-top: 1px solid var(--line);
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .cart-total strong {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 21px;
-    color: var(--ink);
-    letter-spacing: 0;
-    text-transform: none;
-  }
-
-  /* Custom amount */
-  .custom-amount-wrap {
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-    margin-bottom: 18px;
-  }
-  .or-line {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 14px;
-    white-space: nowrap;
-  }
-  .or-line::before, .or-line::after {
-    content: ''; height: 1px; background: var(--line); flex: 1;
-  }
-  .amt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-  .amt-chip {
-    font-family: inherit;
-    font-size: 13px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: #fff;
-    color: var(--ink);
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.18s;
-  }
-  .amt-chip:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
-  .amt-chip.active {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--cream);
-  }
-
-  .amount-field {
-    display: flex; align-items: center;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: #fff;
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .amount-prefix {
-    padding: 0 4px 0 15px;
-    color: var(--muted);
-    font-size: 15px;
-  }
-  .amount-field input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    padding: 13px 14px 13px 6px;
-    font-size: 15px;
-    font-family: inherit;
-    background: transparent;
-    color: var(--ink);
-  }
-  .amount-field input:focus { outline: none; box-shadow: none; }
-  .amount-field input::-webkit-outer-spin-button,
-  .amount-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .amount-field input[type=number] { -moz-appearance: textfield; appearance: textfield; }
-
-  .checkout-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 18px;
-    background: linear-gradient(135deg, #fdfaf3 0%, #f7f0e3 100%);
-    border: 1px solid #eadfc9;
-    border-radius: 16px;
-    margin-bottom: 16px;
-  }
-  .checkout-total span {
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 10.5px;
-    color: var(--muted);
-  }
-  .checkout-total strong {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 30px;
-    line-height: 1;
-    color: var(--ink);
-    font-weight: 500;
-  }
-
-  .pay-btn {
-    width: 100%;
-    padding: 17px 24px;
-    font-size: 13px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    border: none;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #b9a37e 0%, var(--gold) 55%, #96805f 100%);
-    color: #fff;
-    letter-spacing: 0.14em;
-    box-shadow: 0 14px 30px -14px rgba(168, 146, 116, 0.9);
-    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  }
-  .pay-btn:hover {
-    background: linear-gradient(135deg, #c4af8c 0%, #b09a7b 55%, #9f8867 100%);
-    color: #fff;
-    transform: translateY(-2px);
-    filter: brightness(1.05);
-    box-shadow: 0 20px 34px -14px rgba(168, 146, 116, 0.95);
-  }
-  .pay-btn:active { transform: translateY(0); }
-  .pay-btn:disabled,
-  .pay-btn:disabled:hover {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    background: linear-gradient(135deg, #b9a37e 0%, var(--gold) 55%, #96805f 100%);
-    filter: none;
-  }
-
-  .cart-note { font-size: 12.5px; margin: 13px 0 0; line-height: 1.5; text-align: center; }
-  .error { color: #b3261e; font-size: 14px; margin-top: 10px; text-align: center; }
-
-  /* ---------------- Clear basket ---------------- */
-  .clear-cart {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    align-self: flex-end;
-    margin: -4px 0 8px;
-    background: none;
-    border: none;
-    padding: 4px 2px;
-    font-family: inherit;
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .clear-cart:hover { color: #b3261e; }
-
-  /* ---------------- Minimum contribution progress ---------------- */
-  .min-progress { margin: 16px 0 0; }
-  .min-progress-track {
-    height: 4px;
-    border-radius: 999px;
-    background: #ece5d6;
-    overflow: hidden;
-  }
-  .min-progress-fill {
-    display: block;
-    height: 100%;
-    width: 0%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #d8c79e, var(--gold));
-    transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .min-progress.met .min-progress-fill { background: var(--green); }
-  .min-progress-text {
-    margin: 8px 0 0;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--muted);
-    text-align: center;
-  }
-  .min-progress.met .min-progress-text { color: var(--green); }
-
-  /* ---------------- Mobile sticky bar ---------------- */
-  .mobile-bar {
-    position: fixed;
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 12px 12px 12px 20px;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    box-shadow: 0 20px 50px -18px rgba(30, 30, 28, 0.4);
-    z-index: 900;
-    transform: translateY(0);
-    animation: bar-in 0.3s ease;
-  }
-  @keyframes bar-in {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .mobile-bar-info { display: flex; flex-direction: column; gap: 2px; }
-  .mobile-bar-count {
-    font-size: 10.5px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .mobile-bar-total {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 21px;
-    font-weight: 600;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-  .mobile-bar-btn {
-    flex-shrink: 0;
-    background: var(--ink);
-    color: var(--cream);
-    border: none;
-    border-radius: 999px;
-    padding: 12px 22px;
-    font-family: inherit;
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
-  }
-  .mobile-bar-btn:hover { background: #333330; }
-  .mobile-bar-btn:active { transform: scale(0.97); }
-  @media (min-width: 960px) { .mobile-bar { display: none !important; } }
-
-  /* ---------------- Direct transfer ---------------- */
-  .direct { margin-top: 72px; padding-top: 48px; border-top: 1px solid var(--line); }
-  .bank-label {
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    font-size: 11px;
-    color: var(--muted);
-    margin: 34px 0 14px;
-  }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-  .card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 24px;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
-  }
-  .card:hover {
-    transform: translateY(-3px);
-    border-color: #e8dfcd;
-    box-shadow: 0 20px 40px -28px rgba(30, 30, 28, 0.6);
-  }
-  .card.wide { grid-column: 1 / -1; }
-  .bank {
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    font-size: 10.5px;
-    color: var(--gold);
-    margin: 0 0 10px;
-  }
-  .holder {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 21px;
-    margin: 0 0 10px;
-    line-height: 1.2;
-  }
-  .num {
-    font-size: 15px;
-    margin: 0 0 6px;
-    letter-spacing: 0.05em;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-  }
-  .copy {
-    margin-top: 14px;
-    background: none;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 9px 18px;
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
-  }
-  .copy:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
-  .copy.copied { background: var(--green); border-color: var(--green); color: #fff; }
-
-  /* ---------------- Toast ---------------- */
-  .toast {
-    position: fixed;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%) translateY(24px);
-    background: var(--ink);
-    color: #fff;
-    padding: 14px 26px;
-    border-radius: 999px;
-    font-size: 14px;
-    letter-spacing: 0.02em;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s ease, transform 0.28s ease;
-    z-index: 999;
-    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.4);
-    max-width: calc(100vw - 40px);
-    text-align: center;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  @media (max-width: 560px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .basket { padding: 20px; border-radius: 18px; }
-    .details-col { padding: 22px; border-radius: 18px; }
-    .gift-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-    .toast { bottom: 86px; padding: 12px 20px; font-size: 13px; left: 16px; right: 16px; transform: translateY(24px); }
-    .toast.show { transform: translateY(0); }
-    .checkout-total strong { font-size: 26px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .card, .cart-count, .pay-btn { transition: none; }
-  }
-</style>
-
-<style is:global>
-  /* ---- Dynamic elements (created by JS below) must not be Astro-scoped ---- */
-  #registry [hidden] { display: none !important; }
-
-  @keyframes giftIn {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes rowIn {
-    from { opacity: 0; transform: translateX(-8px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes popBadge {
-    0% { transform: scale(0); opacity: 0; }
-    70% { transform: scale(1.25); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  #gift-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 18px;
-  }
-  @media (max-width: 560px) {
-    #gift-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-  }
-
-  .gift-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    overflow: hidden;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    animation: giftIn 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-    animation-delay: var(--d, 0ms);
-    transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1),
-                box-shadow 0.3s ease,
-                border-color 0.3s ease;
-  }
-  .gift-card:hover {
-    transform: translateY(-6px);
-    border-color: transparent;
-    box-shadow: 0 26px 46px -24px rgba(30, 30, 28, 0.45);
-  }
-  .gift-card:focus-visible {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(168, 146, 116, 0.28);
-  }
-  .gift-card.in-cart {
-    border-color: transparent;
-    box-shadow: 0 0 0 1.5px var(--gold), 0 26px 46px -26px rgba(168, 146, 116, 0.75);
-  }
-
-  .gift-media {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    background: linear-gradient(135deg, #f4f0e8, #ebe4d6);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .gift-media img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
-  }
-  .gift-card:hover .gift-media img { transform: scale(1.07); }
-  .gift-media .gift-media-fallback { display: none; font-size: 52px; line-height: 1; }
-  .gift-media.no-img .gift-media-fallback { display: block; }
-
-  .gift-check {
-    position: absolute;
-    top: 11px;
-    right: 11px;
-    width: 27px;
-    height: 27px;
-    border-radius: 50%;
-    background: var(--gold);
-    color: #fff;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transform: scale(0);
-    box-shadow: 0 6px 16px -6px rgba(168, 146, 116, 0.9);
-    z-index: 1;
-  }
-  .gift-card.in-cart .gift-check { animation: popBadge 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
-
-  .gift-body { padding: 15px 16px 4px; }
-  .gift-name {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 19px;
-    line-height: 1.2;
-    margin: 0 0 5px;
-    color: var(--ink);
-  }
-  .gift-price {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--gold);
-    margin: 0;
-    letter-spacing: 0.01em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .gift-foot { margin-top: auto; padding: 13px 16px 16px; }
-
-  .gift-add-btn {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 11px 16px;
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    font-family: inherit;
-    background: #fff;
-    border: 1px solid var(--ink);
-    border-radius: 999px;
-    color: var(--ink);
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, transform 0.15s;
-  }
-  .gift-add-btn:hover { background: var(--ink); color: var(--cream); }
-  .gift-add-btn:active { transform: scale(0.97); }
-  .gift-card.in-cart .gift-add-btn { display: none; }
-
-  .gift-stepper {
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    padding: 5px;
-    background: #fdfaf3;
-    border: 1px solid var(--gold);
-    border-radius: 999px;
-  }
-  .gift-card.in-cart .gift-stepper { display: flex; }
-  .gift-stepper button {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: #fff;
-    color: var(--ink);
-    font-size: 17px;
-    line-height: 1;
-    font-family: inherit;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
-  }
-  .gift-stepper button:hover { background: var(--gold); border-color: var(--gold); color: #fff; }
-  .gift-stepper button:active { transform: scale(0.9); }
-  .gift-stepper .gift-stepper-qty {
-    min-width: 28px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 15px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .gift-card, .gift-card .gift-media img, .gift-check { animation: none !important; transition: none !important; }
-    .gift-card.in-cart .gift-check { opacity: 1; transform: scale(1); }
-  }
-
-  /* ---------------- Cart rows ---------------- */
-  .cart-items { list-style: none; padding: 0; margin: 8px 0 0; }
-  .cart-items:empty { margin: 0; }
-  .cart-items li {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: center;
-    padding: 13px 0;
-    border-bottom: 1px dashed var(--line);
-    animation: rowIn 0.28s ease both;
-  }
-  .cart-items li:last-child { border-bottom: none; }
-
-  .cart-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: 13px;
-    object-fit: cover;
-    background: var(--cream);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    border: 1px solid var(--line);
-    overflow: hidden;
-  }
-  .cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-  .cart-item-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .cart-item-name {
-    font-size: 14.5px;
-    font-weight: 500;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .cart-item-sub {
-    font-size: 12.5px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
-  }
-
-  .cart-item-ctrl { display: flex; align-items: center; gap: 8px; }
-
-  .qty-controls {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--cream);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 3px;
-  }
-  .qty-btn {
-    width: 27px;
-    height: 27px;
-    border-radius: 50%;
-    border: none;
-    background: #fff;
-    cursor: pointer;
-    font-size: 15px;
-    line-height: 1;
-    font-family: inherit;
-    color: var(--ink);
-    box-shadow: 0 1px 3px rgba(30, 30, 28, 0.12);
-    transition: background 0.15s, color 0.15s, transform 0.12s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .qty-btn:hover { background: var(--ink); color: var(--cream); }
-  .qty-btn:active { transform: scale(0.88); }
-  .qty-value {
-    min-width: 20px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 14px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .remove-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    color: #b8b1a5;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
-    padding: 0;
-  }
-  .remove-btn:hover { background: #fbeae9; color: #b3261e; }
-
-  @media (max-width: 420px) {
-    .cart-items li { grid-template-columns: 44px minmax(0, 1fr); }
-    .cart-item-ctrl { grid-column: 1 / -1; justify-content: flex-end; }
-  }
 </style>
 
 <script define:vars={{ API, GIFTS: gifts }}>
   const $ = (id) => document.getElementById(id);
-  let cart = {}; // { itemId: qty }
-
+  let cart = {};
   const money = (n) => `₦${Number(n).toLocaleString()}`;
 
-  // ---------- Toast ----------
+  // Collapse state managed by CollapsibleSection — only basket logic here
+  const cartToggle = $('cart-toggle');
+  const cartBody = $('cart-body');
+  cartToggle?.addEventListener('click', () => {
+    const isOpen = !cartBody.hidden;
+    cartBody.hidden = isOpen;
+    cartToggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+
   let toastTimer;
   function showToast(msg) {
     const t = $('toast');
@@ -1036,7 +227,6 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
   }
-
   function pulseCount() {
     const c = $('cart-count');
     c.classList.remove('pulse');
@@ -1045,32 +235,31 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     setTimeout(() => c.classList.remove('pulse'), 450);
   }
 
-  // ---------- Gift grid ----------
   function renderGiftGrid() {
     const grid = $('gift-grid');
     grid.innerHTML = GIFTS.items.map((item, i) => `
-      <div class="gift-card" data-id="${item.id}" style="--d:${i * 70}ms">
-        <div class="gift-media${item.image ? '' : ' no-img'}">
+      <div class="co-card" data-id="${item.id}" style="--d:${i * 70}ms">
+        <div class="co-media${item.image ? ' has-img' : ''}">
           ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy"
-               onerror="this.closest('.gift-media').classList.add('no-img');this.remove();" />` : ''}
-          <span class="gift-media-fallback" aria-hidden="true">${item.emoji || '🎁'}</span>
-          <span class="gift-check" aria-hidden="true">✓</span>
+               onerror="this.closest('.co-media').classList.remove('has-img');this.remove();" />` : ''}
+          <span class="co-media-fallback" aria-hidden="true">${item.emoji || '🎁'}</span>
+          <span class="co-badge" aria-hidden="true">✓</span>
         </div>
-        <div class="gift-body">
-          <p class="gift-name">${item.name}</p>
-          <p class="gift-price">${money(item.price)}</p>
+        <div class="co-body">
+          <p class="co-name">${item.name}</p>
+          <p class="co-price">${money(item.price)}</p>
         </div>
-        <div class="gift-foot">
-          <button type="button" class="gift-add-btn" data-add="${item.id}"
+        <div class="co-foot">
+          <button type="button" class="co-add" data-add="${item.id}"
                   aria-label="Add ${item.name} to basket">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14"/>
             </svg>
             Add to basket
           </button>
-          <div class="gift-stepper">
+          <div class="co-stepper">
             <button type="button" data-act="dec" aria-label="Decrease quantity of ${item.name}">−</button>
-            <span class="gift-stepper-qty" aria-live="polite">1</span>
+            <span class="qty" aria-live="polite">1</span>
             <button type="button" data-act="inc" aria-label="Increase quantity of ${item.name}">+</button>
           </div>
         </div>
@@ -1082,12 +271,8 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     const item = GIFTS.items.find(i => i.id === id);
     if (!item) return;
     const next = (cart[id] || 0) + delta;
-
     if (next <= 0) {
-      if (cart[id]) {
-        delete cart[id];
-        showToast(`Removed ${item.name}`);
-      }
+      if (cart[id]) { delete cart[id]; showToast(`Removed ${item.name}`); }
     } else {
       cart[id] = next;
     }
@@ -1101,45 +286,34 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     showToast(`Added ${item.name} to basket`);
     renderCart();
     pulseCount();
-
-    const card = document.querySelector(`.gift-card[data-id="${id}"]`);
-    if (card) {
-      card.animate(
-        [
-          { transform: 'translateY(-6px) scale(1)' },
-          { transform: 'translateY(-10px) scale(1.025)' },
-          { transform: 'translateY(-6px) scale(1)' },
-        ],
-        { duration: 340, easing: 'ease-out' }
-      );
+    if (Object.keys(cart).length === 1 && cartBody.hidden) {
+      cartBody.hidden = false;
+      cartToggle.setAttribute('aria-expanded', 'true');
     }
   }
 
-  // Delegated — survives every re-render of the grid
   $('gift-grid').addEventListener('click', (e) => {
-    const step = e.target.closest('.gift-stepper button');
+    const step = e.target.closest('.co-stepper button');
     if (step) {
       e.stopPropagation();
-      changeQty(step.closest('.gift-card').dataset.id, step.dataset.act === 'inc' ? 1 : -1);
+      changeQty(step.closest('.co-card').dataset.id, step.dataset.act === 'inc' ? 1 : -1);
       return;
     }
-    const card = e.target.closest('.gift-card');
+    const card = e.target.closest('.co-card');
     if (card) addItem(card.dataset.id);
   });
 
-  // ---------- Cart render ----------
   function renderCart() {
     const list = $('cart-items');
     const empty = $('cart-empty');
     const totalWrap = $('cart-total-wrap');
-
     const entries = Object.entries(cart);
 
-    // Sync gift cards
-    document.querySelectorAll('.gift-card').forEach(card => {
+    document.querySelectorAll('#gift-grid .co-card').forEach(card => {
       const qty = cart[card.dataset.id] || 0;
-      card.classList.toggle('in-cart', qty > 0);
-      card.querySelector('.gift-stepper-qty').textContent = qty || 1;
+      card.classList.toggle('is-active', qty > 0);
+      const stepperQty = card.querySelector('.co-stepper .qty');
+      if (stepperQty) stepperQty.textContent = qty || 1;
     });
 
     if (entries.length === 0) {
@@ -1152,8 +326,8 @@ const quickAmounts = [10000, 25000, 50000, 100000];
 
     empty.hidden = true;
     totalWrap.hidden = false;
-
     let subtotal = 0;
+
     list.innerHTML = entries.map(([id, qty]) => {
       const item = GIFTS.items.find(i => i.id === id);
       if (!item) return '';
@@ -1164,18 +338,18 @@ const quickAmounts = [10000, 25000, 50000, 100000];
         : `<span>${item.emoji || '🎁'}</span>`;
       return `
         <li data-id="${id}">
-          <div class="cart-thumb">${thumb}</div>
-          <div class="cart-item-info">
-            <span class="cart-item-name">${item.name}</span>
-            <span class="cart-item-sub">${money(item.price)} × ${qty} = ${money(line)}</span>
+          <div class="co-thumb">${thumb}</div>
+          <div class="co-item-info">
+            <span class="co-item-name">${item.name}</span>
+            <span class="co-item-sub">${money(item.price)} × ${qty} = ${money(line)}</span>
           </div>
-          <div class="cart-item-ctrl">
-            <div class="qty-controls">
-              <button type="button" class="qty-btn" data-act="dec" aria-label="Decrease">−</button>
-              <span class="qty-value">${qty}</span>
-              <button type="button" class="qty-btn" data-act="inc" aria-label="Increase">+</button>
+          <div class="co-item-ctrl">
+            <div class="co-qty">
+              <button type="button" data-act="dec" aria-label="Decrease">−</button>
+              <span class="v">${qty}</span>
+              <button type="button" data-act="inc" aria-label="Increase">+</button>
             </div>
-            <button type="button" class="remove-btn" data-act="rm" aria-label="Remove ${item.name}">
+            <button type="button" class="co-remove" data-act="rm" aria-label="Remove ${item.name}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
@@ -1189,7 +363,6 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     updateGrandTotal();
   }
 
-  // Delegated — survives every re-render of the list
   $('cart-items').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
@@ -1220,14 +393,10 @@ const quickAmounts = [10000, 25000, 50000, 100000];
   function updateGrandTotal() {
     const total = grandTotalValue();
     const count = cartCount();
-
     $('grand-total').textContent = money(total);
     $('cart-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
-
-    // Clear-basket affordance
     $('clear-cart').hidden = count === 0;
 
-    // Minimum-contribution progress
     const min = GIFTS.minCustom;
     const bar = $('min-progress');
     const fill = $('min-progress-fill');
@@ -1240,34 +409,30 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       ? 'Minimum contribution reached — thank you!'
       : `${money(min - total)} more to reach the ${money(min)} minimum.`;
 
-    // Mobile sticky bar
     const mobileBar = $('mobile-bar');
     mobileBar.hidden = count === 0 && total === 0;
     $('mobile-bar-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
     $('mobile-bar-total').textContent = money(total);
 
-    // Disable pay until minimum met
     $('pay-btn').disabled = total < min;
   }
 
-  // ---------- Custom amount ----------
   const amtInput = $('custom-amount');
-  document.querySelectorAll('.amt-chip').forEach(chip => {
+  document.querySelectorAll('.co-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.co-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       amtInput.value = chip.dataset.amount;
       updateGrandTotal();
     });
   });
   amtInput.addEventListener('input', () => {
-    document.querySelectorAll('.amt-chip').forEach(c => {
+    document.querySelectorAll('.co-chip').forEach(c => {
       c.classList.toggle('active', c.dataset.amount === amtInput.value);
     });
     updateGrandTotal();
   });
 
-  // ---------- Clear basket ----------
   $('clear-cart').addEventListener('click', () => {
     if (!cartCount()) return;
     cart = {};
@@ -1275,12 +440,37 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     showToast('Basket cleared');
   });
 
-  // ---------- Mobile bar ----------
   $('mobile-bar-btn').addEventListener('click', () => {
+    if (cartBody.hidden) {
+      cartBody.hidden = false;
+      cartToggle.setAttribute('aria-expanded', 'true');
+    }
     $('cart-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  // ---------- Token gate ----------
+  // Validate the invite token. Prefer the registry endpoint, fall back to the
+  // shared `validate` endpoint (the same one RSVP uses). If the API cannot be
+  // reached at all we do NOT lock the guest out — the personalised link is the
+  // credential, and the gift data is already on the page.
+  async function checkInvite(token) {
+    const enc = encodeURIComponent(token);
+    const endpoints = [
+      `${API}?action=registry&token=${enc}`,
+      `${API}?action=validate&token=${enc}`,
+    ];
+    let explicitlyInvalid = false;
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && (data.valid === true || data.reason === 'already_used')) return true;
+        if (data && data.valid === false) explicitlyInvalid = true;
+      } catch { /* network/CORS — try the next endpoint */ }
+    }
+    return explicitlyInvalid ? false : 'unreachable';
+  }
+
   async function init() {
     const token = window.__inviteToken
       || (new URLSearchParams(location.search).get('invite') || '').toUpperCase().trim();
@@ -1291,24 +481,17 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       return;
     }
 
-    try {
-      const res = await fetch(`${API}?action=registry&token=${encodeURIComponent(token)}`);
-      const data = await res.json();
-      $('registry-loading').hidden = true;
-      if (data.valid) {
-        $('gift-content').hidden = false;
-        renderGiftGrid();
-        renderCart();
-      } else {
-        $('registry-locked').hidden = false;
-      }
-    } catch {
-      $('registry-loading').hidden = true;
+    const verdict = await checkInvite(token);
+    $('registry-loading').hidden = true;
+    if (verdict === false) {
       $('registry-locked').hidden = false;
+      return;
     }
+    $('gift-content').hidden = false;
+    renderGiftGrid();
+    renderCart();
   }
 
-  // ---------- Pay ----------
   $('pay-btn')?.addEventListener('click', async () => {
     const btn = $('pay-btn');
     const label = btn.querySelector('.pay-label');
@@ -1338,7 +521,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     const total = itemsTotal + customAmount;
 
     if (total < GIFTS.minCustom) {
-      err.textContent = `Minimum contribution is ${money(GIFTS.minCustom)}. Please add more items or enter a custom amount.`;
+      err.textContent = `Minimum contribution is ${money(GIFTS.minCustom)}.`;
       err.hidden = false;
       return;
     }
@@ -1356,12 +539,11 @@ const quickAmounts = [10000, 25000, 50000, 100000];
         }),
       });
       const data = await res.json();
-
       if (!data.ok) {
         err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
         err.hidden = false;
         btn.disabled = false;
-        label.textContent = 'Pay with Paystack';
+        label.textContent = 'Checkout';
         return;
       }
       window.location.href = data.authorization_url;
@@ -1369,11 +551,10 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       err.textContent = 'Connection error. Please try again.';
       err.hidden = false;
       btn.disabled = false;
-      label.textContent = 'Pay with Paystack';
+      label.textContent = 'Checkout';
     }
   });
 
-  // ---------- Return from Paystack ----------
   window.addEventListener('load', async () => {
     const params = new URLSearchParams(location.search);
     const reference = params.get('reference') || params.get('trxref');
@@ -1391,7 +572,6 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     }
   });
 
-  // ---------- Copy buttons ----------
   document.querySelectorAll('.copy').forEach(btn => {
     btn.addEventListener('click', async () => {
       try {

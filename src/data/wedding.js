@@ -150,4 +150,34 @@ export const wedding = {
     note: 'Charges are in Naira (₦). If you are paying from a foreign bank, your card issuer will convert automatically.',
     paystackPublicKey: import.meta.env.PUBLIC_PAYSTACK_KEY,
   },
+
+
+  asoEbi: {
+    enabled: true,
+    closeDate: '20 March 2027',
+    closeISO: '2027-03-20T23:59:59+01:00',
+    items: [
+      {
+        id: 'ae-bride',
+        side: "Bride's Side",
+        name: 'Aso Ebi Fabric — Bride',
+        price: 15000,
+        unit: 'yard',
+        image: '/asoebi/girls.jpg',
+      },
+      {
+        id: 'ae-groom',
+        side: "Groom's Side",
+        name: 'Aso Ebi Fabric — Groom',
+        price: 15000,
+        unit: 'yard',
+        image: '/asoebi/boys.jpg',
+      },
+    ],
+  },
+
+
+
+
+
 };

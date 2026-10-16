@@ -12,6 +12,14 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
       <p class="muted">Verifying your invitation…</p>
     </div>
 
+    <div id="rsvp-closed" class="state" hidden>
+      <h3 class="serif">RSVP is now closed.</h3>
+      <p class="muted">
+        Thank you to everyone who responded. If you have an urgent enquiry,
+        please contact the couple directly.
+      </p>
+    </div>
+
     <div id="rsvp-locked" class="state" hidden>
       <h3 class="serif">This RSVP link is personal.</h3>
       <p class="muted">
@@ -187,7 +195,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
 
   const $ = (id) => document.getElementById(id);
   const show = (id) => {
-    ['rsvp-loading','rsvp-locked','rsvp-used','rsvp-form-wrap','rsvp-done']
+    ['rsvp-loading','rsvp-locked','rsvp-used','rsvp-closed','rsvp-form-wrap','rsvp-done']
       .forEach(s => $(s).hidden = s !== id);
   };
 
@@ -277,6 +285,12 @@ const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1T
       btn.textContent = 'Send RSVP';
     }
   });
+
+  const RSVP_DEADLINE = new Date('2027-04-04T23:59:59+01:00');
+  if (new Date() > RSVP_DEADLINE) {
+    show('rsvp-closed');
+    return;
+  }
 
   init();
 </script>

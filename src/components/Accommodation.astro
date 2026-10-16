@@ -1,0 +1,555 @@
+---
+import { wedding } from '../data/wedding.js';
+import CollapsibleSection from './CollapsibleSection.astro';
+const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKYA_dk0S1LKR9gr_ByZCC6w/exec';
+
+// Fallback hotel data if the API fails — mirrors HotelInventory sheet
+const fallbackHotels = [
+  {
+    id: 'h1',
+    name: 'Mata Garden',
+    distance: '3 min from venue',
+    image: '/hotels/mata.jpg',
+    rooms: [
+      { type: 'Standard Room', price: 25000, available: 10 },
+      { type: 'Executive Room', price: 40000, available: 5 },
+      { type: 'King Suite', price: 65000, available: 30 },
+    ],
+  },
+  {
+    id: 'h2',
+    name: 'Fams Embassy',
+    distance: '8 min from venue',
+    image: '/hotels/fams.jpg',
+    rooms: [
+      { type: 'Standard Room', price: 15000, available: 8 },
+      { type: 'Executive Room', price: 25000, available: 4 },
+      { type: 'King Suite', price: 45000, available: 30 },
+    ],
+  },
+];
+
+const money = (n) => `₦${Number(n).toLocaleString()}`;
+const WEDDING_DATE = '2027-04-17';
+const DEFAULT_CHECKIN = '2027-04-16';
+const DEFAULT_CHECKOUT = '2027-04-18';
+---
+<CollapsibleSection
+  id="stay"
+  label="Stay"
+  title="Accommodation"
+  summaryTitle="For our travelling guests"
+  summaryText="We've arranged discounted rates at nearby hotels for guests coming from outside Lagos. Reserve your room through us and settle at check-in."
+  buttonText="View Hotels"
+  containerClass="container-wide"
+>
+  <div id="stay-loading" class="state">
+    <p class="muted">Checking room availability…</p>
+  </div>
+
+  <div id="stay-content" hidden>
+    <div class="co-grid co-grid--compact hotel-grid" id="hotel-grid">
+      <!-- Rendered client-side -->
+    </div>
+
+    <p class="stay-note co-note">
+      Rates are per night. Reservations close 31 March 2027. Final
+      confirmation sent by email within 24 hours.
+    </p>
+  </div>
+
+  <div id="stay-error" class="state" hidden>
+    <p class="muted">Could not load room availability. Please try again later or contact the couple.</p>
+  </div>
+
+  <!-- CHECKOUT — revealed once a guest reserves a room -->
+  <div class="co-order checkout-panel" id="checkout-panel" hidden>
+    <div class="co-order-head is-static">
+      <span class="co-order-head-left">
+        <span class="co-order-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
+          </svg>
+        </span>
+        <span class="co-order-titles">
+          <span class="co-order-title" id="checkout-title">—</span>
+          <span class="co-order-count">Reservation</span>
+        </span>
+      </span>
+      <button type="button" class="co-ghostbtn" id="close-checkout-btn">Close ×</button>
+    </div>
+
+    <div class="co-order-body">
+      <!-- LEFT: guest details -->
+      <div class="co-col">
+        <p class="co-kicker">Your stay</p>
+        <div class="co-fields">
+          <label class="co-field">Check-in
+            <input type="date" id="checkin" min={WEDDING_DATE} value={DEFAULT_CHECKIN} />
+          </label>
+          <label class="co-field">Check-out
+            <input type="date" id="checkout" min={WEDDING_DATE} value={DEFAULT_CHECKOUT} />
+          </label>
+          <label class="co-field">Your name
+            <input type="text" id="hotel-name" placeholder="Jane Doe" />
+          </label>
+          <label class="co-field">Email (for receipt)
+            <input type="email" id="hotel-email" placeholder="you@example.com" required />
+          </label>
+          <label class="co-field wide">Phone (WhatsApp)
+            <input type="tel" id="hotel-phone" placeholder="+234..." />
+          </label>
+          <label class="co-field wide">Notes (optional)
+            <textarea id="hotel-note" rows="2" placeholder="Any special requests?"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <!-- RIGHT: summary + pay -->
+      <div class="co-col">
+        <p class="co-kicker">Summary</p>
+        <div class="co-summary">
+          <div class="row">
+            <span class="k">Room</span>
+            <span class="v" id="summary-room">—</span>
+          </div>
+          <div class="row">
+            <span class="k">Nights</span>
+            <span class="v" id="summary-nights">—</span>
+          </div>
+          <div class="row">
+            <span class="k">Rate</span>
+            <span class="v" id="summary-rate">—</span>
+          </div>
+        </div>
+
+        <div class="co-total">
+          <span>Total to pay</span>
+          <strong id="checkout-total">₦0</strong>
+        </div>
+
+        <button class="co-pay" id="hotel-pay-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          <span class="pay-label">Reserve Now</span>
+        </button>
+        <p class="co-note">Reservation confirms once payment is verified.</p>
+        <p class="co-error" id="hotel-error" hidden></p>
+      </div>
+    </div>
+  </div>
+</CollapsibleSection>
+
+<!-- Toast -->
+<div id="stay-toast" class="co-toast" role="status" aria-live="polite"></div>
+
+<style is:global>
+  .state { max-width: 720px; }
+
+  /* Hotel cards, room rows and buttons are injected at runtime via innerHTML,
+     so they never receive Astro's scoped `data-astro-cid` attribute — these
+     rules must be global. The grid sizing comes from `.co-grid--compact`. */
+  .hotel-card .co-media { aspect-ratio: 16 / 10; }
+  .hotel-media-placeholder { color: var(--gold); opacity: 0.55; }
+  .hotel-distance {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(20, 20, 20, 0.78);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+  }
+
+  .hotel-body { padding: 20px 20px 8px; }
+  .hotel-name { font-size: 22px; margin: 0 0 6px; }
+
+  .room-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .room-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .room-row:last-child { border-bottom: none; }
+  .room-row[data-available="0"] { opacity: 0.6; }
+
+  .room-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .room-type {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .room-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .room-price {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .room-price .per {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  .room-reserve {
+    flex: none;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--gold);
+    background: #fff;
+    color: var(--gold);
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.12s, box-shadow 0.25s;
+  }
+  .room-reserve:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b9a37e 0%, var(--gold) 55%, #96805f 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 10px 22px -12px rgba(168, 146, 116, 0.95);
+  }
+  .room-reserve:active:not(:disabled) { transform: scale(0.97); }
+  .room-reserve:disabled {
+    border-color: var(--line);
+    color: var(--muted);
+    background: transparent;
+    cursor: not-allowed;
+  }
+
+  .stay-note { margin: 26px 0 0; }
+</style>
+
+<script define:vars={{ API, FALLBACK_HOTELS: fallbackHotels, DEFAULT_CHECKIN, DEFAULT_CHECKOUT }}>
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => `₦${Number(n).toLocaleString()}`;
+
+  let hotels = [];          // [{ id, name, distance, image, rooms: [{ type, price, available }] }]
+  let selectedHotel = null; // { hotel, room }
+  let nights = 1;
+  let total = 0;
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function showToast(msg) {
+    const t = $('stay-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ---------- Fetch availability ----------
+  async function fetchAvailability() {
+    try {
+      const res = await fetch(`${API}?action=availability`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.ok && data.inventory) {
+        return buildHotelsFromInventory(data.inventory);
+      }
+    } catch (e) {
+      console.warn('Availability fetch failed, using fallback', e);
+    }
+    return FALLBACK_HOTELS;
+  }
+
+  // The inventory comes from HotelInventory as { "Hotel|Room": {...} }
+  // We need to group by hotel and merge with known metadata (price, distance, image).
+  function buildHotelsFromInventory(inventory) {
+    // Price + metadata lookup — kept client-side until we move these to the sheet too
+    const meta = {
+      'Mata Garden': { id: 'h1', distance: '3 min from venue', image: '/hotels/mata.jpg', prices: { 'Standard Room': 25000, 'Executive Room': 40000, 'King Suite': 65000 } },
+      'Fams Embassy': { id: 'h2', distance: '8 min from venue', image: '/hotels/fams.jpg', prices: { 'Standard Room': 15000, 'Executive Room': 25000, 'King Suite': 45000 } },
+    };
+
+    const grouped = {}; // { hotelName: { rooms: [] } }
+
+    Object.values(inventory).forEach(inv => {
+      const hotelName = inv.hotel;
+      if (!grouped[hotelName]) {
+        const m = meta[hotelName] || {};
+        grouped[hotelName] = {
+          id: m.id || hotelName.toLowerCase().replace(/\s+/g, '-'),
+          name: hotelName,
+          distance: m.distance || '',
+          image: m.image || '',
+          rooms: [],
+        };
+      }
+      const m = meta[hotelName] || {};
+      grouped[hotelName].rooms.push({
+        type: inv.roomType,
+        price: (m.prices && m.prices[inv.roomType]) || 0,
+        available: inv.available,
+        max: inv.max,
+      });
+    });
+
+    // Sort rooms within each hotel by order value from inventory
+    return Object.values(grouped).map(h => ({
+      ...h,
+      rooms: h.rooms.sort((a, b) => a.price - b.price),
+    }));
+  }
+
+  // ---------- Render hotels ----------
+  function renderHotels() {
+    const grid = $('hotel-grid');
+    if (!hotels.length) {
+      grid.innerHTML = '<p class="muted">No hotels available at the moment.</p>';
+      return;
+    }
+
+    grid.innerHTML = hotels.map(hotel => `
+      <article class="co-card hotel-card" data-hotel="${hotel.id}">
+        <div class="co-media hotel-media">
+          ${hotel.image
+            ? `<img src="${hotel.image}" alt="${hotel.name}" loading="lazy" />`
+            : `<span class="co-media-fallback hotel-media-placeholder">
+                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                   <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
+                 </svg>
+               </span>`
+          }
+          ${hotel.distance ? `<span class="hotel-distance">${hotel.distance}</span>` : ''}
+        </div>
+
+        <div class="co-body hotel-body">
+          <h3 class="co-name hotel-name">${hotel.name}</h3>
+          <ul class="room-list">
+            ${hotel.rooms.map(room => {
+              const avail = room.available;
+              const availClass = avail === 0 ? 'out' : avail <= 2 ? 'low' : '';
+              const availText = avail === 0
+                ? 'Sold out'
+                : `${avail} ${avail === 1 ? 'room' : 'rooms'} left`;
+              return `
+                <li class="room-row" data-available="${avail}">
+                  <div class="room-info">
+                    <span class="room-type">${room.type}</span>
+                    <span class="co-tag ${availClass}">${availText}</span>
+                  </div>
+                  <div class="room-right">
+                    <span class="room-price">${money(room.price)}<span class="per">/night</span></span>
+                    <button
+                      type="button"
+                      class="room-reserve"
+                      data-hotel="${hotel.id}"
+                      data-room="${room.type}"
+                      ${avail === 0 ? 'disabled' : ''}
+                    >
+                      ${avail === 0 ? 'Sold out' : 'Reserve'}
+                    </button>
+                  </div>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        </div>
+      </article>
+    `).join('');
+
+    // Wire reserve buttons
+    grid.querySelectorAll('.room-reserve').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openCheckout(btn.dataset.hotel, btn.dataset.room);
+      });
+    });
+  }
+
+  // ---------- Open checkout ----------
+  function openCheckout(hotelId, roomType) {
+    const hotel = hotels.find(h => h.id === hotelId);
+    if (!hotel) return;
+    const room = hotel.rooms.find(r => r.type === roomType);
+    if (!room) return;
+
+    selectedHotel = { hotel, room };
+
+    $('checkout-title').textContent = `${hotel.name} — ${room.type}`;
+
+    // Reset date defaults
+    $('checkin').value = DEFAULT_CHECKIN;
+    $('checkout').value = DEFAULT_CHECKOUT;
+
+    $('checkout-panel').hidden = false;
+    updateNightsAndTotal();
+
+    // Scroll checkout into view
+    setTimeout(() => {
+      $('checkout-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  }
+
+  // ---------- Update nights + total ----------
+  function updateNightsAndTotal() {
+    if (!selectedHotel) return;
+
+    const checkinVal = $('checkin').value;
+    const checkoutVal = $('checkout').value;
+
+    const inDate = new Date(checkinVal);
+    const outDate = new Date(checkoutVal);
+    const diffMs = outDate - inDate;
+    const diffNights = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+
+    nights = diffNights;
+    total = selectedHotel.room.price * nights;
+
+    $('summary-room').textContent = `${selectedHotel.hotel.name} — ${selectedHotel.room.type}`;
+    $('summary-nights').textContent = `${nights} ${nights === 1 ? 'night' : 'nights'}`;
+    $('summary-rate').textContent = `${money(selectedHotel.room.price)} / night`;
+    $('checkout-total').textContent = money(total);
+
+    $('hotel-pay-btn').disabled = total < 100;
+  }
+
+  // ---------- Wire date inputs ----------
+  $('checkin')?.addEventListener('change', updateNightsAndTotal);
+  $('checkout')?.addEventListener('change', updateNightsAndTotal);
+
+  // ---------- Close checkout ----------
+  $('close-checkout-btn')?.addEventListener('click', () => {
+    $('checkout-panel').hidden = true;
+    selectedHotel = null;
+    $('hotel-error').hidden = true;
+  });
+
+  // ---------- Pay ----------
+  $('hotel-pay-btn')?.addEventListener('click', async () => {
+    if (!selectedHotel) return;
+
+    const btn = $('hotel-pay-btn');
+    const label = btn.querySelector('.pay-label');
+    const err = $('hotel-error');
+    err.hidden = true;
+
+    const email = $('hotel-email').value.trim();
+    const name = $('hotel-name').value.trim();
+    const phone = $('hotel-phone').value.trim();
+    const note = $('hotel-note').value.trim();
+    const checkin = $('checkin').value;
+    const checkout = $('checkout').value;
+
+    if (!email) {
+      err.textContent = 'Please enter your email for the receipt.';
+      err.hidden = false;
+      $('hotel-email').focus();
+      return;
+    }
+    if (nights < 1) {
+      err.textContent = 'Check-out must be after check-in.';
+      err.hidden = false;
+      return;
+    }
+
+    btn.disabled = true;
+    label.textContent = 'Opening secure checkout…';
+
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'init-accommodation',
+          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
+          hotel: selectedHotel.hotel.name,
+          roomType: selectedHotel.room.type,
+          nights: nights,
+          price: selectedHotel.room.price,
+          amount: total,
+          email, name, phone,
+          checkIn: checkin,
+          checkOut: checkout,
+          note,
+        }),
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
+        err.hidden = false;
+        btn.disabled = false;
+        label.textContent = 'Reserve Now';
+        return;
+      }
+
+      // Redirect to Paystack
+      window.location.href = data.authorization_url;
+    } catch (e) {
+      err.textContent = 'Connection error. Please try again.';
+      err.hidden = false;
+      btn.disabled = false;
+      label.textContent = 'Reserve Now';
+    }
+  });
+
+  // ---------- Return from Paystack ----------
+  window.addEventListener('load', async () => {
+    const params = new URLSearchParams(location.search);
+    const reference = params.get('reference') || params.get('trxref');
+    if (reference) {
+      showToast('Verifying your payment…');
+      try {
+        const r = await fetch(`${API}?action=verify-payment&reference=${reference}`);
+        const d = await r.json();
+        if (d.valid) {
+          showToast('Thank you! Your accommodation is reserved.');
+        } else {
+          showToast('Payment could not be verified. Please contact the couple.');
+        }
+      } catch {
+        showToast('Verification failed. Please contact the couple.');
+      }
+      history.replaceState({}, '', location.pathname + location.hash);
+    }
+  });
+
+  // ---------- Init ----------
+  async function init() {
+    $('stay-loading').hidden = false;
+    $('stay-content').hidden = true;
+    $('stay-error').hidden = true;
+
+    try {
+      hotels = await fetchAvailability();
+      $('stay-loading').hidden = true;
+
+      if (!hotels.length) {
+        $('stay-error').hidden = false;
+        return;
+      }
+
+      renderHotels();
+      $('stay-content').hidden = false;
+    } catch {
+      $('stay-loading').hidden = true;
+      $('stay-error').hidden = false;
+    }
+  }
+
+  init();
+</script>
