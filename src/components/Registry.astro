@@ -1,9 +1,11 @@
 ---
 import { wedding } from '../data/wedding.js';
 import CollapsibleSection from './CollapsibleSection.astro';
-const { registry, gifts } = wedding;
+const { registry } = wedding;
 const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
 const quickAmounts = [10000, 25000, 50000, 100000];
+
+const money = (n) => `₦${Number(n).toLocaleString()}`;
 ---
 <CollapsibleSection
   id="registry"
@@ -35,7 +37,9 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       </p>
     </div>
 
-    <div class="co-grid" id="gift-grid"></div>
+    <div class="co-grid" id="gift-grid">
+      <!-- Rendered client-side -->
+    </div>
 
     <!-- BASKET (collapsible) -->
     <aside class="co-order" id="cart-panel">
@@ -142,7 +146,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
             </svg>
             <span class="pay-label">Checkout</span>
           </button>
-          <p class="co-note">{gifts.note}</p>
+          <p class="co-note">Minimum contribution is ₦10,000</p>
           <p class="co-error" id="gift-error" hidden></p>
         </div>
       </div>
@@ -205,10 +209,12 @@ const quickAmounts = [10000, 25000, 50000, 100000];
   .state { max-width: 720px; }
 </style>
 
-<script define:vars={{ API, GIFTS: gifts }}>
+<script define:vars={{ API }}>
   const $ = (id) => document.getElementById(id);
+  let items = [];
   let cart = {};
   const money = (n) => `₦${Number(n).toLocaleString()}`;
+  const MIN_CUSTOM = 10000;
 
   // Collapse state managed by CollapsibleSection — only basket logic here
   const cartToggle = $('cart-toggle');
@@ -235,9 +241,28 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     setTimeout(() => c.classList.remove('pulse'), 450);
   }
 
+  // ---------- Fetch from Sheet ----------
+  async function fetchCatalog() {
+    try {
+      const res = await fetch(`${API}?action=gift-catalog`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.ok && data.items) {
+        return data.items;
+      }
+    } catch (e) {
+      console.warn('Gift fetch failed', e);
+    }
+    return [];
+  }
+
   function renderGiftGrid() {
     const grid = $('gift-grid');
-    grid.innerHTML = GIFTS.items.map((item, i) => `
+    if (!items.length) {
+      grid.innerHTML = '<p class="muted">No gifts available at the moment.</p>';
+      return;
+    }
+
+    grid.innerHTML = items.map((item, i) => `
       <div class="co-card" data-id="${item.id}" style="--d:${i * 70}ms">
         <div class="co-media${item.image ? ' has-img' : ''}">
           ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy"
@@ -268,7 +293,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
   }
 
   function changeQty(id, delta) {
-    const item = GIFTS.items.find(i => i.id === id);
+    const item = items.find(i => i.id === id);
     if (!item) return;
     const next = (cart[id] || 0) + delta;
     if (next <= 0) {
@@ -280,7 +305,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
   }
 
   function addItem(id) {
-    const item = GIFTS.items.find(i => i.id === id);
+    const item = items.find(i => i.id === id);
     if (!item) return;
     cart[id] = (cart[id] || 0) + 1;
     showToast(`Added ${item.name} to basket`);
@@ -329,7 +354,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     let subtotal = 0;
 
     list.innerHTML = entries.map(([id, qty]) => {
-      const item = GIFTS.items.find(i => i.id === id);
+      const item = items.find(i => i.id === id);
       if (!item) return '';
       const line = item.price * qty;
       subtotal += line;
@@ -369,7 +394,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     const id = btn.closest('li').dataset.id;
     const act = btn.dataset.act;
     if (act === 'rm') {
-      const item = GIFTS.items.find(i => i.id === id);
+      const item = items.find(i => i.id === id);
       delete cart[id];
       if (item) showToast(`Removed ${item.name}`);
       renderCart();
@@ -384,7 +409,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
 
   function grandTotalValue() {
     const itemsTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
-      const item = GIFTS.items.find(i => i.id === id);
+      const item = items.find(i => i.id === id);
       return sum + (item ? item.price * qty : 0);
     }, 0);
     return itemsTotal + Math.max(0, Number($('custom-amount').value || 0));
@@ -397,7 +422,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     $('cart-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
     $('clear-cart').hidden = count === 0;
 
-    const min = GIFTS.minCustom;
+    const min = MIN_CUSTOM;
     const bar = $('min-progress');
     const fill = $('min-progress-fill');
     const text = $('min-progress-text');
@@ -448,10 +473,6 @@ const quickAmounts = [10000, 25000, 50000, 100000];
     $('cart-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  // Validate the invite token. Prefer the registry endpoint, fall back to the
-  // shared `validate` endpoint (the same one RSVP uses). If the API cannot be
-  // reached at all we do NOT lock the guest out — the personalised link is the
-  // credential, and the gift data is already on the page.
   async function checkInvite(token) {
     const enc = encodeURIComponent(token);
     const endpoints = [
@@ -487,6 +508,10 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       $('registry-locked').hidden = false;
       return;
     }
+
+    // Fetch the items from the sheet before rendering
+    items = await fetchCatalog();
+    
     $('gift-content').hidden = false;
     renderGiftGrid();
     renderCart();
@@ -512,16 +537,16 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       return;
     }
 
-    const items = Object.entries(cart).map(([id, qty]) => {
-      const item = GIFTS.items.find(i => i.id === id);
+    const cartItems = Object.entries(cart).map(([id, qty]) => {
+      const item = items.find(i => i.id === id);
       return { name: item.name, qty, price: item.price };
     });
 
-    const itemsTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const itemsTotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
     const total = itemsTotal + customAmount;
 
-    if (total < GIFTS.minCustom) {
-      err.textContent = `Minimum contribution is ${money(GIFTS.minCustom)}.`;
+    if (total < MIN_CUSTOM) {
+      err.textContent = `Minimum contribution is ${money(MIN_CUSTOM)}.`;
       err.hidden = false;
       return;
     }
@@ -533,7 +558,7 @@ const quickAmounts = [10000, 25000, 50000, 100000];
       const url = new URL(API);
       url.searchParams.set('action', 'init-gift');
       url.searchParams.set('token', window.__inviteToken || new URLSearchParams(location.search).get('invite') || '');
-      url.searchParams.set('items', JSON.stringify(items));
+      url.searchParams.set('items', JSON.stringify(cartItems));
       url.searchParams.set('amount', String(total));
       url.searchParams.set('email', email);
       url.searchParams.set('name', name);

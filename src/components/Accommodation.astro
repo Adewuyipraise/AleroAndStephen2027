@@ -3,32 +3,6 @@ import { wedding } from '../data/wedding.js';
 import CollapsibleSection from './CollapsibleSection.astro';
 const API = 'https://script.google.com/macros/s/AKfycbwOrvTMUoC_GMJRBTjije-8qd1TqiHd0NgcQuHTx_UVRKyA_dk0S1LKR9gr_ByZCC6w/exec';
 
-// Fallback hotel data if the API fails — mirrors HotelInventory sheet
-const fallbackHotels = [
-  {
-    id: 'h1',
-    name: 'Mata Garden',
-    distance: '3 min from venue',
-    image: '/hotels/mata.jpg',
-    rooms: [
-      { type: 'Standard Room', price: 25000, available: 10 },
-      { type: 'Executive Room', price: 40000, available: 5 },
-      { type: 'King Suite', price: 65000, available: 30 },
-    ],
-  },
-  {
-    id: 'h2',
-    name: 'Fams Embassy',
-    distance: '8 min from venue',
-    image: '/hotels/fams.jpg',
-    rooms: [
-      { type: 'Standard Room', price: 15000, available: 8 },
-      { type: 'Executive Room', price: 25000, available: 4 },
-      { type: 'King Suite', price: 45000, available: 30 },
-    ],
-  },
-];
-
 const money = (n) => `₦${Number(n).toLocaleString()}`;
 const WEDDING_DATE = '2027-04-17';
 const DEFAULT_CHECKIN = '2027-04-16';
@@ -48,6 +22,7 @@ const DEFAULT_CHECKOUT = '2027-04-18';
   </div>
 
   <div id="stay-content" hidden>
+    <!-- YOUR GRID CLASS -->
     <div class="co-grid co-grid--compact hotel-grid" id="hotel-grid">
       <!-- Rendered client-side -->
     </div>
@@ -62,7 +37,7 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     <p class="muted">Could not load room availability. Please try again later or contact the couple.</p>
   </div>
 
-  <!-- CHECKOUT — revealed once a guest reserves a room -->
+  <!-- YOUR BEAUTIFUL CHECKOUT CLASSES -->
   <div class="co-order checkout-panel" id="checkout-panel" hidden>
     <div class="co-order-head is-static">
       <span class="co-order-head-left">
@@ -142,15 +117,12 @@ const DEFAULT_CHECKOUT = '2027-04-18';
   </div>
 </CollapsibleSection>
 
-<!-- Toast -->
 <div id="stay-toast" class="co-toast" role="status" aria-live="polite"></div>
 
 <style is:global>
   .state { max-width: 720px; }
 
-  /* Hotel cards, room rows and buttons are injected at runtime via innerHTML,
-     so they never receive Astro's scoped `data-astro-cid` attribute — these
-     rules must be global. The grid sizing comes from `.co-grid--compact`. */
+  /* YOUR CUSTOM STYLES FOR HOTEL CARDS */
   .hotel-card .co-media { aspect-ratio: 16 / 10; }
   .hotel-media-placeholder { color: var(--gold); opacity: 0.55; }
   .hotel-distance {
@@ -169,6 +141,8 @@ const DEFAULT_CHECKOUT = '2027-04-18';
 
   .hotel-body { padding: 20px 20px 8px; }
   .hotel-name { font-size: 22px; margin: 0 0 6px; }
+  .hotel-location { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+  .hotel-description { font-size: 14px; color: var(--ink); margin: 0 0 16px; line-height: 1.4; }
 
   .room-list {
     list-style: none;
@@ -244,16 +218,15 @@ const DEFAULT_CHECKOUT = '2027-04-18';
   .stay-note { margin: 26px 0 0; }
 </style>
 
-<script define:vars={{ API, FALLBACK_HOTELS: fallbackHotels, DEFAULT_CHECKIN, DEFAULT_CHECKOUT }}>
+<script define:vars={{ API, DEFAULT_CHECKIN, DEFAULT_CHECKOUT }}>
   const $ = (id) => document.getElementById(id);
   const money = (n) => `₦${Number(n).toLocaleString()}`;
 
-  let hotels = [];          // [{ id, name, distance, image, rooms: [{ type, price, available }] }]
-  let selectedHotel = null; // { hotel, room }
+  let hotels = [];
+  let selectedHotel = null;
   let nights = 1;
   let total = 0;
 
-  // ---------- Toast ----------
   let toastTimer;
   function showToast(msg) {
     const t = $('stay-toast');
@@ -263,60 +236,21 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
   }
 
-  // ---------- Fetch availability ----------
+  // ---------- Fetch from Sheet ----------
   async function fetchAvailability() {
     try {
       const res = await fetch(`${API}?action=availability`, { cache: 'no-store' });
       const data = await res.json();
-      if (data.ok && data.inventory) {
-        return buildHotelsFromInventory(data.inventory);
+      if (data.ok && data.hotels) {
+        return data.hotels; // Now returns the formatted array from the new Apps Script
       }
     } catch (e) {
-      console.warn('Availability fetch failed, using fallback', e);
+      console.warn('Availability fetch failed', e);
     }
-    return FALLBACK_HOTELS;
+    return [];
   }
 
-  // The inventory comes from HotelInventory as { "Hotel|Room": {...} }
-  // We need to group by hotel and merge with known metadata (price, distance, image).
-  function buildHotelsFromInventory(inventory) {
-    // Price + metadata lookup — kept client-side until we move these to the sheet too
-    const meta = {
-      'Mata Garden': { id: 'h1', distance: '3 min from venue', image: '/hotels/mata.jpg', prices: { 'Standard Room': 25000, 'Executive Room': 40000, 'King Suite': 65000 } },
-      'Fams Embassy': { id: 'h2', distance: '8 min from venue', image: '/hotels/fams.jpg', prices: { 'Standard Room': 15000, 'Executive Room': 25000, 'King Suite': 45000 } },
-    };
-
-    const grouped = {}; // { hotelName: { rooms: [] } }
-
-    Object.values(inventory).forEach(inv => {
-      const hotelName = inv.hotel;
-      if (!grouped[hotelName]) {
-        const m = meta[hotelName] || {};
-        grouped[hotelName] = {
-          id: m.id || hotelName.toLowerCase().replace(/\s+/g, '-'),
-          name: hotelName,
-          distance: m.distance || '',
-          image: m.image || '',
-          rooms: [],
-        };
-      }
-      const m = meta[hotelName] || {};
-      grouped[hotelName].rooms.push({
-        type: inv.roomType,
-        price: (m.prices && m.prices[inv.roomType]) || 0,
-        available: inv.available,
-        max: inv.max,
-      });
-    });
-
-    // Sort rooms within each hotel by order value from inventory
-    return Object.values(grouped).map(h => ({
-      ...h,
-      rooms: h.rooms.sort((a, b) => a.price - b.price),
-    }));
-  }
-
-  // ---------- Render hotels ----------
+  // ---------- Render (Using your CO classes) ----------
   function renderHotels() {
     const grid = $('hotel-grid');
     if (!hotels.length) {
@@ -325,10 +259,10 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     }
 
     grid.innerHTML = hotels.map(hotel => `
-      <article class="co-card hotel-card" data-hotel="${hotel.id}">
+      <article class="co-card hotel-card" data-hotel="${hotel.name}">
         <div class="co-media hotel-media">
           ${hotel.image
-            ? `<img src="${hotel.image}" alt="${hotel.name}" loading="lazy" />`
+            ? `<img src="${hotel.image}" alt="${hotel.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<span class=\\'co-media-fallback hotel-media-placeholder\\'><svg width=\\'48\\' height=\\'48\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.2\\'><path d=\\'M3 21h18M5 21V7l8-4v18M19 21V11l-6-4\\'/></svg></span>');" />`
             : `<span class="co-media-fallback hotel-media-placeholder">
                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
                    <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
@@ -340,13 +274,13 @@ const DEFAULT_CHECKOUT = '2027-04-18';
 
         <div class="co-body hotel-body">
           <h3 class="co-name hotel-name">${hotel.name}</h3>
+          ${hotel.location ? `<p class="hotel-location">${hotel.location}</p>` : ''}
+          ${hotel.description ? `<p class="hotel-description">${hotel.description}</p>` : ''}
           <ul class="room-list">
             ${hotel.rooms.map(room => {
               const avail = room.available;
               const availClass = avail === 0 ? 'out' : avail <= 2 ? 'low' : '';
-              const availText = avail === 0
-                ? 'Sold out'
-                : `${avail} ${avail === 1 ? 'room' : 'rooms'} left`;
+              const availText = avail === 0 ? 'Sold out' : `${avail} ${avail === 1 ? 'room' : 'rooms'} left`;
               return `
                 <li class="room-row" data-available="${avail}">
                   <div class="room-info">
@@ -358,7 +292,7 @@ const DEFAULT_CHECKOUT = '2027-04-18';
                     <button
                       type="button"
                       class="room-reserve"
-                      data-hotel="${hotel.id}"
+                      data-hotel="${hotel.name}"
                       data-room="${room.type}"
                       ${avail === 0 ? 'disabled' : ''}
                     >
@@ -373,7 +307,6 @@ const DEFAULT_CHECKOUT = '2027-04-18';
       </article>
     `).join('');
 
-    // Wire reserve buttons
     grid.querySelectorAll('.room-reserve').forEach(btn => {
       btn.addEventListener('click', () => {
         openCheckout(btn.dataset.hotel, btn.dataset.room);
@@ -381,122 +314,90 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     });
   }
 
-  // ---------- Open checkout ----------
-  function openCheckout(hotelId, roomType) {
-    const hotel = hotels.find(h => h.id === hotelId);
+  // ---------- Checkout Logic ----------
+  function openCheckout(hotelName, roomType) {
+    const hotel = hotels.find(h => h.name === hotelName);
     if (!hotel) return;
     const room = hotel.rooms.find(r => r.type === roomType);
     if (!room) return;
 
     selectedHotel = { hotel, room };
-
     $('checkout-title').textContent = `${hotel.name} — ${room.type}`;
-
-    // Reset date defaults
     $('checkin').value = DEFAULT_CHECKIN;
     $('checkout').value = DEFAULT_CHECKOUT;
-
     $('checkout-panel').hidden = false;
     updateNightsAndTotal();
 
-    // Scroll checkout into view
     setTimeout(() => {
       $('checkout-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 60);
   }
 
-  // ---------- Update nights + total ----------
   function updateNightsAndTotal() {
     if (!selectedHotel) return;
-
-    const checkinVal = $('checkin').value;
-    const checkoutVal = $('checkout').value;
-
-    const inDate = new Date(checkinVal);
-    const outDate = new Date(checkoutVal);
-    const diffMs = outDate - inDate;
-    const diffNights = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-
-    nights = diffNights;
+    const inDate = new Date($('checkin').value);
+    const outDate = new Date($('checkout').value);
+    nights = Math.max(1, Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)));
     total = selectedHotel.room.price * nights;
 
     $('summary-room').textContent = `${selectedHotel.hotel.name} — ${selectedHotel.room.type}`;
     $('summary-nights').textContent = `${nights} ${nights === 1 ? 'night' : 'nights'}`;
     $('summary-rate').textContent = `${money(selectedHotel.room.price)} / night`;
     $('checkout-total').textContent = money(total);
-
     $('hotel-pay-btn').disabled = total < 100;
   }
 
-  // ---------- Wire date inputs ----------
   $('checkin')?.addEventListener('change', updateNightsAndTotal);
   $('checkout')?.addEventListener('change', updateNightsAndTotal);
 
-  // ---------- Close checkout ----------
   $('close-checkout-btn')?.addEventListener('click', () => {
     $('checkout-panel').hidden = true;
     selectedHotel = null;
     $('hotel-error').hidden = true;
   });
 
-  // ---------- Pay ----------
   $('hotel-pay-btn')?.addEventListener('click', async () => {
     if (!selectedHotel) return;
-
     const btn = $('hotel-pay-btn');
     const label = btn.querySelector('.pay-label');
     const err = $('hotel-error');
     err.hidden = true;
 
     const email = $('hotel-email').value.trim();
-    const name = $('hotel-name').value.trim();
-    const phone = $('hotel-phone').value.trim();
-    const note = $('hotel-note').value.trim();
-    const checkin = $('checkin').value;
-    const checkout = $('checkout').value;
-
-    if (!email) {
-      err.textContent = 'Please enter your email for the receipt.';
-      err.hidden = false;
-      $('hotel-email').focus();
-      return;
-    }
-    if (nights < 1) {
-      err.textContent = 'Check-out must be after check-in.';
-      err.hidden = false;
-      return;
-    }
+    if (!email) { err.textContent = 'Please enter your email.'; err.hidden = false; return; }
 
     btn.disabled = true;
-    label.textContent = 'Opening secure checkout…';
+    label.textContent = 'Opening checkout…';
 
     try {
-        const url = new URL(API);
-        url.searchParams.set('action', 'init-accommodation');
-        url.searchParams.set('token', window.__inviteToken || new URLSearchParams(location.search).get('invite') || '');
-        url.searchParams.set('hotel', selectedHotel.hotel.name);
-        url.searchParams.set('roomType', selectedHotel.room.type);
-        url.searchParams.set('nights', String(nights));
-        url.searchParams.set('price', String(selectedHotel.room.price));
-        url.searchParams.set('email', email);
-        url.searchParams.set('name', name);
-        url.searchParams.set('phone', phone);
-        url.searchParams.set('checkIn', checkin);
-        url.searchParams.set('checkOut', checkout);
-        url.searchParams.set('note', note);
-
-        const res = await fetch(url.toString(), { method: 'GET' });
-        const data = await res.json();
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'init-accommodation',
+          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
+          hotel: selectedHotel.hotel.name,
+          roomType: selectedHotel.room.type,
+          nights: nights,
+          price: selectedHotel.room.price,
+          amount: total,
+          email: email,
+          name: $('hotel-name').value.trim(),
+          phone: $('hotel-phone').value.trim(),
+          checkIn: $('checkin').value,
+          checkOut: $('checkout').value,
+          note: $('hotel-note').value.trim(),
+        }),
+      });
+      const data = await res.json();
 
       if (!data.ok) {
-        err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
+        err.textContent = 'Error: ' + (data.error || 'unknown');
         err.hidden = false;
         btn.disabled = false;
         label.textContent = 'Reserve Now';
         return;
       }
-
-      // Redirect to Paystack
       window.location.href = data.authorization_url;
     } catch (e) {
       err.textContent = 'Connection error. Please try again.';
@@ -506,13 +407,11 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     }
   });
 
-  // ---------- Return from Paystack ----------
   window.addEventListener('load', async () => {
     const params = new URLSearchParams(location.search);
     const reference = params.get('reference') || params.get('trxref');
     if (!reference) return;
 
-    // Prevent duplicate verify runs across sections
     const guardKey = 'verify_started_' + reference;
     if (sessionStorage.getItem(guardKey)) {
       history.replaceState({}, '', location.pathname + location.hash);
@@ -520,17 +419,20 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     }
     sessionStorage.setItem(guardKey, '1');
 
+    showToast('Verifying your payment…');
     try {
       const r = await fetch(`${API}?action=verify-payment&reference=${reference}`);
       const d = await r.json();
       if (d.valid) {
-        showToast('Thank you! Your payment has been received.');
+        showToast('Thank you! Your accommodation is reserved.');
+        setTimeout(() => {
+          fetchAvailability().then(h => { hotels = h; renderHotels(); });
+        }, 1500);
       }
     } catch {}
     history.replaceState({}, '', location.pathname + location.hash);
   });
 
-  // ---------- Init ----------
   async function init() {
     $('stay-loading').hidden = false;
     $('stay-content').hidden = true;
@@ -539,12 +441,7 @@ const DEFAULT_CHECKOUT = '2027-04-18';
     try {
       hotels = await fetchAvailability();
       $('stay-loading').hidden = true;
-
-      if (!hotels.length) {
-        $('stay-error').hidden = false;
-        return;
-      }
-
+      if (!hotels.length) { $('stay-error').hidden = false; return; }
       renderHotels();
       $('stay-content').hidden = false;
     } catch {

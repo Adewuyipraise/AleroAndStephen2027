@@ -32,9 +32,11 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
       <strong>Orders close: {asoEbi.closeDate}</strong>
     </p>
 
-    <div class="co-grid co-grid--compact" id="asoebi-grid"></div>
+    <div class="co-grid co-grid--compact" id="asoebi-grid">
+      <!-- Rendered client-side -->
+    </div>
 
-    <!-- BASKET -->
+    <!-- BASKET (Using your custom co-* styling) -->
     <aside class="co-order" id="asoebi-cart-panel">
       <button type="button" class="co-order-head" id="asoebi-cart-toggle" aria-expanded="false">
         <span class="co-order-head-left">
@@ -135,8 +137,9 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
   .asoebi-deadline strong { color: var(--gold); font-weight: 600; }
 </style>
 
-<script define:vars={{ API, ASOEBI: asoEbi }}>
+<script define:vars={{ API, ASOEBI_CLOSE_DATE: asoEbi.closeDate }}>
   const $ = (id) => document.getElementById(id);
+  let items = [];
   let cart = {};
   const money = (n) => `₦${Number(n).toLocaleString()}`;
 
@@ -148,9 +151,29 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     cartToggle.setAttribute('aria-expanded', String(!isOpen));
   });
 
-  function renderAsoEbiGrid() {
+  // ---------- Fetch from Sheet ----------
+  async function fetchCatalog() {
+    try {
+      const res = await fetch(`${API}?action=asoebi-catalog`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.ok && data.items) {
+        return data.items;
+      }
+    } catch (e) {
+      console.warn('AsoEbi fetch failed', e);
+    }
+    return [];
+  }
+
+  // ---------- Render (Using your CO classes) ----------
+  function renderGrid() {
     const grid = $('asoebi-grid');
-    grid.innerHTML = ASOEBI.items.map((item, i) => `
+    if (!items.length) {
+      grid.innerHTML = '<p class="muted">No fabrics available at the moment.</p>';
+      return;
+    }
+
+    grid.innerHTML = items.map((item, i) => `
       <div class="co-card" data-id="${item.id}" style="--d:${i * 70}ms">
         <div class="co-media${item.image ? ' has-img' : ''}">
           ${item.image
@@ -185,7 +208,7 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
   }
 
   function changeQty(id, delta) {
-    const item = ASOEBI.items.find(i => i.id === id);
+    const item = items.find(i => i.id === id);
     if (!item) return;
     const next = (cart[id] || 0) + delta;
     if (next <= 0) {
@@ -197,7 +220,7 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
   }
 
   function addItem(id) {
-    const item = ASOEBI.items.find(i => i.id === id);
+    const item = items.find(i => i.id === id);
     if (!item) return;
     cart[id] = (cart[id] || 0) + 1;
     renderCart();
@@ -246,7 +269,7 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
 
     let subtotal = 0;
     list.innerHTML = entries.map(([id, qty]) => {
-      const item = ASOEBI.items.find(i => i.id === id);
+      const item = items.find(i => i.id === id);
       if (!item) return '';
       const line = item.price * qty;
       subtotal += line;
@@ -293,7 +316,7 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
   }
   function cartTotal() {
     return Object.entries(cart).reduce((sum, [id, qty]) => {
-      const item = ASOEBI.items.find(i => i.id === id);
+      const item = items.find(i => i.id === id);
       return sum + (item ? item.price * qty : 0);
     }, 0);
   }
@@ -306,8 +329,7 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     $('asoebi-pay-btn').disabled = total <= 0;
   }
 
-  // See Registry.astro — registry endpoint first, `validate` fallback, and never
-  // lock a guest out when the API is simply unreachable.
+  // ---------- Verify & Init ----------
   async function checkInvite(token) {
     const enc = encodeURIComponent(token);
     const endpoints = [
@@ -343,11 +365,16 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
       $('asoebi-locked').hidden = false;
       return;
     }
+    
+    // Fetch the sheet data before rendering
+    items = await fetchCatalog();
+    
     $('asoebi-content').hidden = false;
-    renderAsoEbiGrid();
+    renderGrid();
     renderCart();
   }
 
+  // ---------- Pay ----------
   $('asoebi-pay-btn')?.addEventListener('click', async () => {
     const btn = $('asoebi-pay-btn');
     const label = btn.querySelector('.pay-label');
@@ -371,8 +398,8 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
       return;
     }
 
-    const items = Object.entries(cart).map(([id, qty]) => {
-      const item = ASOEBI.items.find(i => i.id === id);
+    const cartItems = Object.entries(cart).map(([id, qty]) => {
+      const item = items.find(i => i.id === id);
       return { name: `${item.name} (${item.side})`, qty, price: item.price };
     });
     const total = cartTotal();
@@ -381,18 +408,19 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     label.textContent = 'Opening secure checkout…';
 
     try {
-        const url = new URL(API);
-        url.searchParams.set('action', 'init-asoebi');
-        url.searchParams.set('token', window.__inviteToken || new URLSearchParams(location.search).get('invite') || '');
-        url.searchParams.set('items', JSON.stringify(items));
-        url.searchParams.set('amount', String(total));
-        url.searchParams.set('email', email);
-        url.searchParams.set('name', name);
-        url.searchParams.set('phone', phone);
-        url.searchParams.set('note', note);
-
-        const res = await fetch(url.toString(), { method: 'GET' });
-        const data = await res.json();
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'init-asoebi',
+          token: window.__inviteToken || new URLSearchParams(location.search).get('invite'),
+          items: cartItems,
+          amount: total,
+          email, name, phone, note
+        }),
+      });
+      const data = await res.json();
+      
       if (!data.ok) {
         err.textContent = 'Could not start payment: ' + (data.error || 'unknown');
         err.hidden = false;
@@ -414,7 +442,6 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
     const reference = params.get('reference') || params.get('trxref');
     if (!reference) return;
 
-    // Prevent duplicate verify runs across sections
     const guardKey = 'verify_started_' + reference;
     if (sessionStorage.getItem(guardKey)) {
       history.replaceState({}, '', location.pathname + location.hash);
@@ -426,7 +453,8 @@ const money = (n) => `₦${Number(n).toLocaleString()}`;
       const r = await fetch(`${API}?action=verify-payment&reference=${reference}`);
       const d = await r.json();
       if (d.valid) {
-        showToast('Thank you! Your payment has been received.');
+        // Using window.alert for simplicity if toast is missing, but you had showToast defined
+        alert('Thank you! Your payment has been received.');
       }
     } catch {}
     history.replaceState({}, '', location.pathname + location.hash);
