@@ -121,9 +121,9 @@ export const wedding = {
   },
 
   contact: {
-    phone: '09025958168', // PLACEHOLDER — to be supplied
-    email: 'rasheedpesedie@gmail.com', // PLACEHOLDER
-    note: 'Enquiry number to be confirmed (pending event planner decision).',
+    phone: '08161232797', // PLACEHOLDER — to be supplied
+    email: 'bigplusmedia@gmail.com', // PLACEHOLDER
+    note: ' ',
   },
 
   faq: [
